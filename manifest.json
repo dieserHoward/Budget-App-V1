@@ -3,8 +3,8 @@
   "short_name": "Budget.Mgr",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#2196f3",
+  "background_color": "#000000",
+  "theme_color": "#0f9d58",
   "icons": [
     {
       "src": "icons/icon-192.png",
