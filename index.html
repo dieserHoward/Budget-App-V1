@@ -1390,18 +1390,18 @@ if (clearBudgetBtn) {
 
   /* Tab-Leiste unten */
   #tabs {
-    position: fixed;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    background: #f0f0f0;
-    border-top: 1px solid #ccc;
-    width: 320px;
-    border-radius: 8px 8px 0 0;
-    box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
-    overflow: hidden;
-  }
+  position: fixed;
+  bottom: 20px; /* Abstand zum unteren Rand */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px; /* Abstand zwischen den Buttons */
+  z-index: 9999; /* Damit es über allem liegt */
+  background: rgba(255, 255, 255, 0.9); /* Optional: leicht transparentes Weiß */
+  padding: 10px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
   #tabs button {
     flex: 1;
     padding: 10px 0;
@@ -1644,16 +1644,21 @@ button[type="submit"]:hover {
 
 /* Formatierung der Monatsausgabenaussicht ganz oben auf der Titelseite */
 #monatsuebersicht {
+  position: fixed;
+  top: 70px; /* Platz unter dem Header */
+  left: 0;
+  width: 100%;
   display: flex;
   justify-content: space-around;
   gap: 10px;
-  margin: 20px 0;
+  margin: 0; /* Kein Margin bei fixed */
   padding: 15px;
-  border-radius: 12px;
+  border-radius: 0;
   background-color: #f9f9f9;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   font-weight: bold;
   flex-wrap: wrap;
+  z-index: 999;
 }
 
 .uebersicht-feld {
