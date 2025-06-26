@@ -1389,47 +1389,50 @@ if (clearBudgetBtn) {
 
 
   /* Tab-Leiste unten */
-  #tabs {
+    /* Tab-Leiste unten */
+#tabs {
   position: fixed;
-  bottom: 20px; /* Abstand zum unteren Rand */
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: 20px;
+  left: 0;
+  right: 0;
   display: flex;
   gap: 10px; /* Abstand zwischen den Buttons */
-  z-index: 9999; /* Damit es über allem liegt */
-  background: rgba(255, 255, 255, 0.9); /* Optional: leicht transparentes Weiß */
+  z-index: 9999;
+  background: #ffffff; /* Undurchsichtiger Hintergrund */
   padding: 10px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  border-radius: 12px 12px 0 0; /* Nur oben abgerundet, optional */
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
 }
-  #tabs button {
-    flex: 1;
-    padding: 10px 0;
-    border: none;
-    background: #e0e0e0;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 1rem;
-    transition: background-color 0.3s;
-  }
-  #tabs button:not(:last-child) {
-    border-right: 1px solid #ccc;
-  }
-  #tabs button.active {
-    background: #339af0;
-    color: white;
-  }
-  #tabs button:hover:not(.active) {
-    background: #cce4ff;
-  }
 
-  /* Tab-Inhalt */
-  #tab-content > div {
-    display: none;
-  }
-  #tab-content > div.active {
-    display: block;
-  }
+/* Buttons */
+#tabs button {
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  background: #e0e0e0;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1rem;
+  transition: background-color 0.3s;
+}
+#tabs button:not(:last-child) {
+  border-right: 1px solid #ccc;
+}
+#tabs button.active {
+  background: #339af0;
+  color: white;
+}
+#tabs button:hover:not(.active) {
+  background: #cce4ff;
+}
+
+/* Tab-Inhalt */
+#tab-content > div {
+  display: none;
+}
+#tab-content > div.active {
+  display: block;
+}
 
 /* Plus-Button unten rechts */
 #plus-button {
