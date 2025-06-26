@@ -1390,54 +1390,55 @@ if (clearBudgetBtn) {
 
   /* Tab-Leiste unten */
     /* Tab-Leiste unten */
-#tabs {
+
+  /* Tab-Leiste unten */
+  #tabs {
   position: fixed;
-  bottom: 20px;
+  bottom: 0;
   left: 0;
   right: 0;
   display: flex;
-  gap: 10px; /* Abstand zwischen den Buttons */
+  gap: 10px;
   z-index: 9999;
-  background: #ffffff; /* Undurchsichtiger Hintergrund */
+  background: #ffffff;
   padding: 10px;
-  border-radius: 12px 12px 0 0; /* Nur oben abgerundet, optional */
+  padding-bottom: 40px; /* Extra Platz unten */
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
+  border-radius: 12px 12px 0 0;
 }
+  #tabs button {
+    flex: 1;
+    padding: 10px 0;
+    border: none;
+    background: #e0e0e0;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
+    transition: background-color 0.3s;
+  }
+  #tabs button:not(:last-child) {
+    border-right: 1px solid #ccc;
+  }
+  #tabs button.active {
+    background: #339af0;
+    color: white;
+  }
+  #tabs button:hover:not(.active) {
+    background: #cce4ff;
+  }
 
-/* Buttons */
-#tabs button {
-  flex: 1;
-  padding: 10px 0;
-  border: none;
-  background: #e0e0e0;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 1rem;
-  transition: background-color 0.3s;
-}
-#tabs button:not(:last-child) {
-  border-right: 1px solid #ccc;
-}
-#tabs button.active {
-  background: #339af0;
-  color: white;
-}
-#tabs button:hover:not(.active) {
-  background: #cce4ff;
-}
-
-/* Tab-Inhalt */
-#tab-content > div {
-  display: none;
-}
-#tab-content > div.active {
-  display: block;
-}
+  /* Tab-Inhalt */
+  #tab-content > div {
+    display: none;
+  }
+  #tab-content > div.active {
+    display: block;
+  }
 
 /* Plus-Button unten rechts */
 #plus-button {
   position: fixed;
-  bottom: 80px;
+  bottom: 110px;
   right: 20px;
   background: #339af0;
   color: white;
@@ -1450,6 +1451,7 @@ if (clearBudgetBtn) {
   cursor: pointer;
   z-index: 1000;
 }
+
 
 /* Popup-Overlay */
 /* Popup-Grundlayout */
