@@ -1,0 +1,772 @@
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 700px;
+    margin: 1rem auto 5rem auto;
+    padding: 0 1rem;
+  }
+  h1, h2 {
+    text-align: center;
+  }
+  form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+  form > * {
+    font-size: 1rem;
+    padding: 0.3rem 0.5rem;
+  }
+  input[type=number] {
+    width: 90px;
+  }
+  input[type=date] {
+    width: 140px;
+  }
+  button {
+    cursor: pointer;
+    padding: 0.4rem 1rem;
+    font-weight: bold;
+  }
+  #liste {
+  list-style: none;
+  padding: 0;
+  /* max-height: 160px; */       /* Entfernen */
+  /* overflow-y: auto; */        /* Entfernen */
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 2rem;
+}
+  #liste li {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.3rem 0.5rem;
+    border-bottom: 1px solid #eee;
+  }
+  #liste li span {
+    flex-grow: 1;
+  }
+  #liste li button {
+    background: #e74c3c;
+    border: none;
+    color: white;
+    font-weight: bold;
+    border-radius: 3px;
+    padding: 0 6px;
+  }
+  #liste li button:hover {
+    background: #c0392b;
+  }
+
+  /* Kalender */
+  #kalender {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 2rem;
+    user-select: none;
+  }
+  #kalender div.leer {
+    background: #f9f9f9;
+    border: none;
+  }
+  #kalender div.tag {
+    border: 1px solid #ccc;
+    min-height: 70px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 4px 2px;
+    cursor: pointer;
+    border-radius: 4px;
+    background: #fff;
+    font-size: 0.9rem;
+    position: relative;
+    transition: background-color 0.2s;
+  }
+  #kalender div.tag:hover {
+    background-color: #f0f8ff;
+  }
+  #kalender div.tag .saldo {
+    font-weight: bold;
+    margin-top: 4px;
+    font-size: 0.85rem;
+  }
+  #kalender div.tag .saldo.positiv {
+    color: green;
+  }
+  #kalender div.tag .saldo.negativ {
+    color: red;
+  }
+  #kalender div.tag.heute {
+    background-color: #fff3cd;
+    border-color: #ffa500;
+  }
+  #kalender div.tag.ausgewaehlt {
+    background-color: #d0ebff;
+    border-color: #339af0;
+  }
+  #kalender div.tag.heute.ausgewaehlt {
+    background-color: #d0ebff;
+    border-color: #ffa500;
+  }
+
+  #wochentage {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 0.8rem;
+  margin-top: -50px;
+  margin-bottom: 4px;
+  color: #666;
+  user-select: none;
+}
+
+
+
+  #monatsteuerelemente {
+    
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.5rem 0;
+  margin: 250px 0 1rem; /* oberer Abstand damit es unter Slider landet */
+}
+
+
+
+#monatsteuerelemente button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+#monatsteuerelemente button:hover {
+  background-color: #0056b3;
+}
+
+#monatanzeige {
+  font-weight: bold;
+  font-size: 1.5rem;
+  background-color: #f0f0f0;
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  user-select: none;
+}
+
+
+  /* Tab-Leiste unten */
+  #tabs {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 10px;
+  z-index: 9999;
+  background: #ffffff;
+  padding: 10px;
+  padding-bottom: 40px; /* Extra Platz unten */
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
+  border-radius: 12px 12px 0 0;
+}
+  #tabs button {
+    flex: 1;
+    padding: 10px 0;
+    border: none;
+    background: #e0e0e0;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
+    transition: background-color 0.3s;
+  }
+  #tabs button:not(:last-child) {
+    border-right: 1px solid #ccc;
+  }
+  #tabs button.active {
+    background: #339af0;
+    color: white;
+  }
+  #tabs button:hover:not(.active) {
+    background: #cce4ff;
+  }
+
+  /* Tab-Inhalt */
+  #tab-content > div {
+    display: none;
+  }
+  #tab-content > div.active {
+    display: block;
+  }
+
+/* Plus-Button unten rechts */
+#plus-button {
+  position: fixed;
+  bottom: 110px;
+  right: 20px;
+  background: #339af0;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  font-size: 2rem;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  cursor: pointer;
+  z-index: 1000;
+}
+
+/* Popup-Overlay */
+/* Popup-Grundlayout */
+#popup-overlay {
+  display: none; /* ✅ damit es anfangs versteckt ist */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+#popup {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 300px;
+  position: relative;
+}
+
+#popup-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border: none;
+  background: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* Typ Buttons */
+#typ-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.typ-btn {
+  flex: 1;
+  padding: 12px 16px;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  background-color: #f8f9fa;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Einzahlung (grün) */
+.typ-btn[data-typ="einnahme"] {
+  border-color: #28a745;
+  color: #28a745;
+}
+.typ-btn[data-typ="einnahme"]:hover {
+  background-color: rgba(40, 167, 69, 0.1);
+}
+.typ-btn[data-typ="einnahme"].active {
+  background-color: #28a745;
+  color: white;
+}
+
+/* Auszahlung (rot) */
+.typ-btn[data-typ="ausgabe"] {
+  border-color: #dc3545;
+  color: #dc3545;
+}
+.typ-btn[data-typ="ausgabe"]:hover {
+  background-color: rgba(220, 53, 69, 0.1);
+}
+.typ-btn[data-typ="ausgabe"].active {
+  background-color: #dc3545;
+  color: white;
+}
+
+
+table {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+select,
+input[type="number"],
+input[type="date"],
+button[type="submit"] {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  box-sizing: border-box;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+/*Submit Button schön*/
+button[type="submit"] {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  margin-top: 15px;
+  cursor: pointer;
+}
+
+button[type="submit"] {
+  background-color: #2e86de; /* Primär-Blau */
+  color: white;
+  border: none;
+  margin-top: 15px;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 10px;
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+}
+
+button[type="submit"]:hover {
+  background-color: #1e6fd9; /* etwas dunkler beim Hover */
+}
+
+/* Dynamische Kategorien */
+#kategorie-verwalten {
+  background: #f1f1f1;
+  padding: 15px;
+  border-radius: 10px;
+  width: 300px;
+}
+
+#kategorie-verwalten h3 {
+  margin-top: 0;
+}
+
+#kategorie-verwalten select,
+#kategorie-verwalten input,
+#kategorie-verwalten button {
+  width: 100%;
+  padding: 8px;
+  margin-top: 8px;
+  box-sizing: border-box;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+/*Popup fertig*/
+
+/* Responsive Anpassungen für Smartphones */
+@media (max-width: 480px) {
+  body {
+    padding: 0 0.5rem;
+    margin-bottom: 7rem; /* Platz für fixe Tabs unten */
+  }
+
+  form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  input[type=number],
+  input[type=date],
+  select {
+    width: 100% !important;
+  }
+
+  #tabs {
+    width: 100%;
+    border-radius: 0;
+    left: 0;
+    transform: none;
+  }
+
+  #tab-content-statistik canvas {
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  #kalender {
+    grid-template-columns: repeat(7, minmax(35px, 1fr));
+  }
+
+  #kalender div.tag {
+    min-height: 60px;
+    font-size: 0.8rem;
+  }
+
+  button,
+  #monatsteuerelemente button {
+    font-size: 0.9rem;
+    padding: 0.5rem;
+  }
+}
+/* Responsive Anpassungen für Smartphones fertig */
+
+
+/* Formatierung der Monatsausgabenaussicht ganz oben auf der Titelseite */
+#monatsuebersicht {
+  position: fixed;
+  top: 70px; /* Platz unter dem Header */
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  gap: 10px;
+  margin: 0; /* Kein Margin bei fixed */
+  padding: 15px;
+  border-radius: 0;
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  font-weight: bold;
+  flex-wrap: wrap;
+  z-index: 500;
+}
+
+.uebersicht-feld {
+  flex: 1;
+  min-width: 100px;
+  text-align: center;
+  padding: 12px;
+  border-radius: 10px;
+  background-color: white;
+  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.05);
+  font-size: 1.1em;
+}
+
+.einnahmen span {
+  color: #2e7d32; /* dunkles Grün */
+  font-weight: bold;
+}
+
+.ausgaben span {
+  color: #c62828; /* dunkles Rot */
+  font-weight: bold;
+}
+
+.Budget span {
+  font-weight: bold;
+}
+
+.Budget .positiv {
+  color: #1565c0; /* blau */
+}
+
+.Budget .negativ {
+  color: #c62828; /* rot */
+}
+
+
+/* Formatierung der Monatsausgabenaussicht ganz oben auf der Titelseite fertig */
+
+
+/* Formatting Hamburger Zeichen - Einstellungszeichen Titelseite */
+#header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #ddd;
+  background-color: white;
+  z-index: 10000;
+}
+
+
+#header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  text-align: center;
+}
+
+#settings-icon {
+  position: absolute;
+  right: 3rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.8rem;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+#settings-icon:hover {
+  background-color: #eee;
+}
+
+/* Formatting Hamburger Zeichen - Einstellungszeichen Titelseite fertig */
+
+/* Popup2 - Einstellungen style */
+#settings-icon {
+        font-size: 2rem;
+        cursor: pointer;
+        user-select: none;
+      }
+      #popup2-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      #popup2 {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        max-width: 400px;
+        width: 90%;
+        position: relative;
+      }
+      #popup2-close {
+        position: absolute;
+        top: 10px; right: 10px;
+        font-size: 1.5rem;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+      }
+/* Popup2 - Einstellungen - hamburger Zeichen style fertig*/
+
+/* Tab2 - Slider Ein-Auszahlungen Gesamt */
+.container-switch {
+  width: 300px;
+  margin: 20px auto 40px;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  border-bottom: 1px solid #ccc;
+  user-select: none;
+  height: 56px; /* feste Höhe kann helfen */
+}
+
+.nav > div {
+  flex: 1;
+  text-align: center;
+  padding: 16px 0;      /* Mehr Höhe */
+  cursor: pointer;
+  font-weight: bold;    /* Fett */
+  font-size: 1.1rem;    /* Optional: etwas größer */
+}
+
+
+.nav > div[data-pos]:hover {
+  background-color: #f0f0f0;
+}
+
+.underline {
+  position: absolute;
+  bottom: 1px;
+  height: 1px;
+  width: 33.3333%;
+  background-color: #007bff;
+  transform: scaleY(0.2); /* halbiert visuell die Dicke */
+  transform-origin: bottom;
+  transition: left 0.3s ease;
+}
+
+/* Tab2 - Slider Ein-Auszahlungen Gesamt fertig */
+
+
+/* Budget-Verwaltungs Popup Start */
+/* Gemeinsames Overlay-Design */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Popup Container */
+.popup {
+  background: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  position: relative;
+}
+
+/* Close Button */
+.close-btn {
+  position: absolute;
+  top: 12px;
+  right: 15px;
+  font-size: 24px;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+/* Eingabefeld */
+#budget-input {
+  width: 80%;
+  padding: 10px;
+  font-size: 18px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-top: 15px;
+}
+
+/* Button-Gruppe */
+.budget-buttons {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.budget-buttons button {
+  padding: 10px 16px;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+#save-budget {
+  background-color: #28a745;
+  color: white;
+}
+
+#clear-budget {
+  background-color: #dc3545;
+  color: white;
+}
+
+.budget-buttons button:hover {
+  opacity: 0.9;
+}
+/* Budget-Verwaltungs Popup Ende */
+
+/* Budget Slider Start */
+#budget-progress-container {
+  position: fixed;
+  top: 190px; /* Platz unter dem Header */
+  left: 5%;
+  
+  width: 90%;
+  margin-top: 10px;
+}
+
+
+#budget-bar-background {
+  position: relative;
+  height: 20px;
+  background-color: #eee;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+#budget-bar-fill {
+  height: 100%;
+  width: 0%;
+  transition: width 0.5s ease-in-out, background-color 0.5s ease-in-out;
+  background-color: #a8e6a1; /* Default: hellgrün */
+}
+
+
+#budget-time-marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background-color: rgb(0, 4, 255);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Zweiter marker für wie weit sollte es sein */
+#slider-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+#budget-slider {
+  width: 100%;
+  height: 10px;
+  appearance: none;
+  background-color: #eee;
+  border-radius: 5px;
+  outline: none;
+  position: relative;
+  z-index: 1;
+}
+
+#budget-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background-color: #007BFF;
+  border-radius: 50%;
+  cursor: default;
+}
+
+#zeit-marker {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  background-color: rgb(0, 110, 255);
+  z-index: 2;
+  pointer-events: none;
+  border-radius: 1px;
+}
+
+
+
+/* Budget Slider Ende */
+
+
+
+
+/* Fixierter Container oben auf Titelseite */
+#fixed-top-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  background-color: white;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+/* Scrollbarer Bereich auf Titeseite*/
+#scroll-content {
+  margin-top: 370px; /* <--- Anpassen je nach tatsächlicher Höhe vom fixierten Bereich */
+  padding: 1rem;
+}
