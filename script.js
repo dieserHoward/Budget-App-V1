@@ -137,6 +137,8 @@ document.getElementById('popup-form').addEventListener('submit', function (e) {
   // Ausgewähltes Datum im Kalender (Standard: heute)
   let ausgewaehltesDatum = formatDate(new Date());
 
+
+  //
   // DOM-Elemente
   const kalender = document.getElementById("kalender");
   const monatanzeige = document.getElementById("monatanzeige");
@@ -145,7 +147,7 @@ document.getElementById('popup-form').addEventListener('submit', function (e) {
   const liste = document.getElementById("liste");
   const form = document.getElementById("form");
   const formTypInput = document.getElementById("typ");
-  const betragInput = document.getElementById("betrag");
+  const betragInput = document.getElementById("betrag"); // main form
   const kategorieInput = document.getElementById("kategorie");
   const datumInput = document.getElementById("datum");
 
@@ -725,3 +727,67 @@ if (clearBudgetBtn) {
   });
 }
 // Budget-Verwaltungs Popup Ende
+
+// Aktualisierungsbutton für Seite im Titel Start
+document.getElementById('refresh-icon').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    location.reload();
+  }
+});
+// Aktualisierungsbutton für Seite im Titel Ende
+
+
+// Virtuelle Tastatur für mobile Geräte Start
+const popupBetragInput = document.getElementById("popup-betrag");
+const vk = document.getElementById("virtual-keyboard");
+const vkButtons = vk.querySelectorAll(".vk-btn");
+const vkOk = document.getElementById("vk-ok");
+const vkBackspace = document.getElementById("vk-backspace");
+const vkEqual = document.getElementById("vk-equal");
+
+// Öffne virtuelle Tastatur wenn Input fokussiert wird
+popupBetragInput.addEventListener("focus", () => {
+  vk.style.display = "block";
+});
+
+// Buttons belegen
+vkButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    if (btn.id === "vk-ok") {
+      vk.style.display = "none";
+      popupBetragInput.blur();
+      return;
+    }
+
+    if (btn.id === "vk-backspace") {
+      popupBetragInput.value = popupBetragInput.value.slice(0, -1);
+      return;
+    }
+
+    if (btn.id === "vk-equal") {
+      try {
+        // Für Berechnung: Komma zu Punkt tauschen
+        let expr = popupBetragInput.value
+          .replace(/×/g, "*")
+          .replace(/÷/g, "/")
+          .replace(/,/g, ".");
+
+        let result = Function(`"use strict"; return (${expr})`)();
+
+        if (typeof result === "number" && !isNaN(result)) {
+          // Ergebnis als String, Punkt zurück zu Komma
+          popupBetragInput.value = result.toFixed(2).replace(".", ",");
+        }
+      } catch (e) {
+        alert("Ungültiger Ausdruck");
+      }
+      return;
+    }
+
+    // Beim Eingeben: Zeichen so in den Input einfügen wie sie auf Button sind (Komma bleibt Komma)
+    popupBetragInput.value += btn.textContent;
+  });
+});
+// Virtuelle Tastatur für mobile Geräte Ende
+
