@@ -636,25 +636,43 @@ function berechneMonatsuebersicht(jahr, monat) {
     saldoElement.classList.add(saldo >= 0 ? "positiv" : "negativ");
   }
   // Budget-Slider aktualisieren
+  // Budget-Slider 
   // Budget und Ausgaben als Prozent
-  const ausgabenProzent = userBudget > 0 ? (ausgaben / userBudget) * 100 : 0;
-  const fillElement = document.getElementById("budget-bar-fill");
-  fillElement.style.width = Math.min(ausgabenProzent, 100) + "%";  // Max 100%
-  // Zeitlicher Fortschritt im Monat
-  const heute = new Date();
+ // Annahme: 'monat' und 'jahr' sind definiert für den angezeigten Monat/Jahr
+const heute = new Date();
+const aktuellerMonat = heute.getMonth();
+const aktuellesJahr = heute.getFullYear();
+
+const ausgabenProzent = userBudget > 0 ? (ausgaben / userBudget) * 100 : 0;
+const fillElement = document.getElementById("budget-bar-fill");
+fillElement.style.width = Math.min(ausgabenProzent, 100) + "%";  // Max 100%
+
+const zeitMarker = document.getElementById("budget-time-marker");
+
+// Zeitlicher Fortschritt nur setzen, wenn aktueller Monat
+if (monat === aktuellerMonat && jahr === aktuellesJahr) {
   const aktuellerTag = heute.getDate();
   const tageImMonat = new Date(jahr, monat + 1, 0).getDate();
   const zeitFortschrittProzent = (aktuellerTag / tageImMonat) * 100;
-
-  const zeitMarker = document.getElementById("budget-time-marker");
   zeitMarker.style.left = `${Math.min(zeitFortschrittProzent, 100)}%`;
 
-  // Dynamische Farbe je nach Ausgaben vs. Zeitfortschritt
   if (ausgabenProzent <= zeitFortschrittProzent) {
-  fillElement.style.backgroundColor = "#a8e6a1"; // hellgrün
+    fillElement.style.backgroundColor = "#a8e6a1"; // hellgrün
   } else {
-  fillElement.style.backgroundColor = "#f6a6a6"; // hellrot
+    fillElement.style.backgroundColor = "#f6a6a6"; // hellrot
   }
+} else {
+  // Für andere Monate: Kein Zeitmarker (oder optional ausblenden)
+  zeitMarker.style.left = `100%`; // Oder: zeitMarker.style.display = "none";
+
+  // Grün, wenn Budget nicht überschritten, sonst rot
+  if (ausgabenProzent <= 100) {
+    fillElement.style.backgroundColor = "#a8e6a1"; // hellgrün
+  } else {
+    fillElement.style.backgroundColor = "#f6a6a6"; // hellrot
+  }
+}
+
 
 
 
@@ -747,9 +765,10 @@ const vkBackspace = document.getElementById("vk-backspace");
 const vkEqual = document.getElementById("vk-equal");
 
 // Öffne virtuelle Tastatur wenn Input fokussiert wird
-popupBetragInput.addEventListener("focus", () => {
+popupBetragInput.addEventListener("click", () => {
   vk.style.display = "block";
 });
+
 
 // Buttons belegen
 vkButtons.forEach(btn => {
