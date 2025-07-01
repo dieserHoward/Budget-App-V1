@@ -244,40 +244,6 @@ tagDiv.addEventListener("click", () => {
   berechneMonatsuebersicht(jahr, monat);
 }
 
-let touchStartX = 0;
-let touchStartY = 0;
-let swipeHandled = false;
-
-kalenderElement.addEventListener("touchstart", (e) => {
-  touchStartX = e.touches[0].clientX;
-  touchStartY = e.touches[0].clientY;
-  swipeHandled = false;
-});
-
-kalenderElement.addEventListener("touchmove", (e) => {
-  if (swipeHandled) return;
-
-  const deltaX = e.touches[0].clientX - touchStartX;
-  const deltaY = e.touches[0].clientY - touchStartY;
-
-  // Wenn horizontale Bewegung deutlich stärker ist als vertikale
-  if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY)) {
-    swipeHandled = true; // Nur einmal reagieren pro Geste
-
-    if (deltaX < 0) {
-      // Swipe nach links → nächster Monat
-      aktuellesDatum.setMonth(aktuellesDatum.getMonth() + 1);
-    } else {
-      // Swipe nach rechts → vorheriger Monat
-      aktuellesDatum.setMonth(aktuellesDatum.getMonth() - 1);
-    }
-
-    renderKalender();
-  }
-});
-
-
-
 
   // Saldo für Datum (Einnahmen - Ausgaben)
   function berechneSaldoFuerDatum(datumStr) {
