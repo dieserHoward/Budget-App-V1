@@ -118,47 +118,55 @@
   grid-template-columns: repeat(7, 1fr);
   text-align: center;
   font-size: 0.8rem;
-  margin-top: -50px;
+  margin-top: -110px;
   margin-bottom: 4px;
   color: #666;
   user-select: none;
 }
 
 
-
-  #monatsteuerelemente {
+#monatsteuerelemente {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 0.6rem;          /* kleinerer Abstand */
-  margin: 210px 0 1rem; /* oben bleibt, unten wie gehabt */
+  gap: 1rem;
+  margin: 210px 0 1rem;
 }
 
 #monatsteuerelemente button {
+  font-size: 1.3rem;
+  font-weight: 700;
+  padding: 0.4rem;
+  border-radius: 50%;         /* rund */
+  width: 40px;
+  height: 40px;
   background-color: #007bff;
   color: white;
   border: none;
-  padding: 0.3rem 0.7rem;  /* kleiner gepolstert */
-  border-radius: 6px;
-  font-size: 0.85rem;      /* kleinere Schrift */
   cursor: pointer;
-  transition: background-color 0.2s ease;
-  min-width: 60px;         /* fixe Mindestbreite, damit Buttons nicht zu schmal werden */
+  box-shadow: 0 2px 5px rgba(0, 123, 255, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-#monatsteuerelemente button:hover {
+#monatsteuerelemente button:hover,
+#monatsteuerelemente button:focus {
   background-color: #0056b3;
+  box-shadow: 0 4px 10px rgba(0, 86, 179, 0.6);
+  outline: none;
 }
 
 #monatanzeige {
   font-weight: bold;
-  font-size: 1.1rem;        /* kleiner als vorher */
+  font-size: 1.1rem;
   background-color: #f0f0f0;
-  padding: 0.4rem 0.8rem;   /* weniger Padding */
+  padding: 0.4rem 0.8rem;
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   user-select: none;
-  min-width: 80px;          /* damit Anzeige nicht zu schmal wird */
+  min-width: 80px;
   text-align: center;
 }
 
@@ -462,6 +470,7 @@ button[type="submit"]:hover {
   }
 }
 
+
 .einnahmen span {
   color: #2e7d32;
   font-weight: bold;
@@ -483,6 +492,7 @@ button[type="submit"]:hover {
 .Budget .negativ {
   color: #c62828;
 }
+
 
 
 /* Formatierung der Monatsausgabenaussicht ganz oben auf der Titelseite fertig */
@@ -508,6 +518,8 @@ button[type="submit"]:hover {
   margin: 0;
   font-size: 1.8rem;
 }
+
+
 
 #settings-icon {
   position: absolute;
