@@ -13,7 +13,7 @@
 
 
 
-<!---========================= HIER HTML ===========================-->
+
 
 <!DOCTYPE html>
 <html lang="de">
@@ -200,7 +200,7 @@
     <div>So</div>
   </div>
   <div id="kalender"></div>
-  <h2>Einträge für ausgewählten Tag</h2>
+  <h2 style="font-size: 20px;">Einträge für ausgewählten Tag</h2>
   <ul id="liste"></ul>
 </div>
 
@@ -272,15 +272,14 @@
 
   <table>
     <tr>
-      <td><label for="popup-betrag">Betrag:</label></td>
-    </tr>
-    <tr>
-      <td>
-        <input type="text" id="popup-betrag" name="betrag" placeholder="Betrag (€)" readonly required />
-      </td>
-    </tr>
-    <tr>
-  <tr>
+  <td colspan="2">
+    <div class="betrag-row">
+      <label for="popup-betrag">Betrag:</label>
+      <input type="text" id="popup-betrag" name="betrag" placeholder="Betrag (€)" readonly required />
+    </div>
+  </td>
+</tr>
+  
   
 <tr>
   <td>
@@ -323,22 +322,27 @@
 
 
     <tr>
-      <td><label for="wordSelect">Kategorie:</label></td>
-    </tr>
-    <tr>
-      <td>
-        <select id="wordSelect">
-          <option disabled selected>Keine Wörter verfügbar</option>
-        </select>
-      </td>
-    </tr>
+  <td colspan="2">
+    <div class="kategorie-row">
+      <label for="wordSelect">Kategorie:</label>
+      <select id="wordSelect">
+        <option disabled selected>Keine Wörter verfügbar</option>
+      </select>
+    </div>
+  </td>
+</tr>
+<td>
 
+</td>
     <tr>
-      <td><label for="popup-datum">Datum:</label></td>
-    </tr>
-    <tr>
-      <td><input type="date" id="popup-datum" name="datum" required /></td>
-    </tr>
+  <td colspan="2">
+    <div class="datum-row">
+      <label for="popup-datum">Datum:</label>
+      <input type="date" id="popup-datum" name="datum" required />
+    </div>
+  </td>
+</tr>
+
   </table>
 
   <button type="submit">Hinzufügen</button>
@@ -604,6 +608,10 @@ if (gespeicherteKategorien) {
 
 </body>
 </html>
+
+
+      
+<!---========================= HIER HTML ===========================-->
 
 
 <!---========================= HIER HTML Ende aber ohne Schluss===========================-->
