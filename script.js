@@ -245,34 +245,37 @@ tagDiv.addEventListener("click", () => {
 }
 
 let touchStartX = 0;
-let touchEndX = 0;
-
-const kalenderElement = document.getElementById("kalender");
+let touchStartY = 0;
+let swipeHandled = false;
 
 kalenderElement.addEventListener("touchstart", (e) => {
-  touchStartX = e.changedTouches[0].screenX;
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+  swipeHandled = false;
 });
 
-kalenderElement.addEventListener("touchend", (e) => {
-  touchEndX = e.changedTouches[0].screenX;
-  handleSwipe();
-});
+kalenderElement.addEventListener("touchmove", (e) => {
+  if (swipeHandled) return;
 
-function handleSwipe() {
-  const swipeDist = touchEndX - touchStartX;
-  
-  if (Math.abs(swipeDist) < 50) return; // kleiner Swipe → ignorieren
+  const deltaX = e.touches[0].clientX - touchStartX;
+  const deltaY = e.touches[0].clientY - touchStartY;
 
-  if (swipeDist < 0) {
-    // Nach links gewischt → nächster Monat
-    aktuellesDatum.setMonth(aktuellesDatum.getMonth() + 1);
-  } else {
-    // Nach rechts gewischt → vorheriger Monat
-    aktuellesDatum.setMonth(aktuellesDatum.getMonth() - 1);
+  // Wenn horizontale Bewegung deutlich stärker ist als vertikale
+  if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY)) {
+    swipeHandled = true; // Nur einmal reagieren pro Geste
+
+    if (deltaX < 0) {
+      // Swipe nach links → nächster Monat
+      aktuellesDatum.setMonth(aktuellesDatum.getMonth() + 1);
+    } else {
+      // Swipe nach rechts → vorheriger Monat
+      aktuellesDatum.setMonth(aktuellesDatum.getMonth() - 1);
+    }
+
+    renderKalender();
   }
+});
 
-  renderKalender();
-}
 
 
 
