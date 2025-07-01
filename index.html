@@ -14,10 +14,12 @@
 
 
 <!---========================= HIER HTML ===========================-->
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Budget Manager</title>
   <link rel="stylesheet" href="style.css" />
@@ -31,7 +33,7 @@
     <div id="popup2">
       <button id="popup2-close">&times;</button>
       <h2>Einstellungen</h2>
-      <p>Hier kannst du deine Einstellungen anpassen.</p>
+      <!-- <p>Hier kannst du deine Einstellungen anpassen.</p> -->
       <button id="open-kategorie-popup" style="margin-top: 20px;">Kategorien verwalten</button>
       <button id="open-budget-popup" style="margin-top: 20px;">Budget verwalten</button>
       <button id="open-wiederkehrende-popup" style="margin-top: 20px;">Wiederkehrende Zahlungen</button>
@@ -107,9 +109,33 @@
   </script>
 
   <div id="header">
-    <h1>Budget Manager</h1>
-    <div id="settings-icon" title="Einstellungen">&#9776;</div>
-  </div>
+  <div id="refresh-icon" title="Seite aktualisieren" role="button" tabindex="0">&#10227;</div>
+  <h1>Budget Manager</h1>
+  <div id="settings-icon" title="Einstellungen" role="button" tabindex="0">&#9776;</div>
+</div>
+
+<script>
+  // Warten bis DOM geladen ist
+  document.addEventListener('DOMContentLoaded', () => {
+    const refreshBtn = document.getElementById('refresh-icon');
+
+    refreshBtn.addEventListener('click', () => {
+      location.reload();
+    });
+
+    // Für Tastaturbedienung (Enter oder Space)
+    refreshBtn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        location.reload();
+      }
+    });
+  });
+</script>
+
+
+
+
 
 <!-- ================= Tabs für Navigation ================= -->
   <!-- Tabs -->
@@ -152,13 +178,13 @@
       <div id="budget-stand-text"></div>
     </div>
 
-   <!-- Monatsnavigation (fixiert) -->
-<!-- Monatsnavigation (fixiert) -->
+    <!-- Monatsnavigation (fixiert) -->
 <div id="monatsteuerelemente">
   <button id="vorherigerMonat" aria-label="Vorheriger Monat">&#x25C0;</button> <!-- ◀ -->
   <div id="monatanzeige">Juli 2025</div>
   <button id="naechsterMonat" aria-label="Nächster Monat">&#x25B6;</button> <!-- ▶ -->
 </div>
+
 
   </div>
 
@@ -250,9 +276,51 @@
     </tr>
     <tr>
       <td>
-        <input type="number" id="popup-betrag" name="betrag" placeholder="Betrag (€)" step="0.01" min="0" required />
+        <input type="text" id="popup-betrag" name="betrag" placeholder="Betrag (€)" step="0.01" min="0" required />
       </td>
     </tr>
+    <tr>
+  <tr>
+  
+<tr>
+  <td>
+    <div id="virtual-keyboard" style="display:none;">
+  <div class="vk-row">
+    <button type="button" class="vk-btn operator">+</button>
+    <button type="button" class="vk-btn operator">-</button>
+    <button type="button" class="vk-btn operator">×</button>
+    <button type="button" class="vk-btn operator">÷</button>
+  </div>
+  <div class="vk-row">
+    <button type="button" class="vk-btn">7</button>
+    <button type="button" class="vk-btn">8</button>
+    <button type="button" class="vk-btn">9</button>
+    <button type="button" id="vk-equal" class="vk-btn operator">=</button>
+  </div>
+  <div class="vk-row">
+    <button type="button" class="vk-btn">4</button>
+    <button type="button" class="vk-btn">5</button>
+    <button type="button" class="vk-btn">6</button>
+    <button type="button" class="vk-btn comma">,</button>  <!-- Klasse "comma" hinzu -->
+  </div>
+  <div class="vk-row">
+    <button type="button" class="vk-btn">1</button>
+    <button type="button" class="vk-btn">2</button>
+    <button type="button" class="vk-btn">3</button>
+    <button type="button" id="vk-backspace" class="vk-btn backspace">←</button> <!-- Klasse "backspace" hinzu -->
+  </div>
+  <div class="vk-row">
+    <div style="flex:1"></div>
+    <button type="button" class="vk-btn" style="flex: 1;">0</button>  <!-- 0 mittig -->
+    <div style="flex:1"></div>
+    <button type="button" id="vk-ok" class="vk-btn ok-btn">OK</button>
+  </div>
+</div>
+
+  </td>
+</tr>
+
+
 
     <tr>
       <td><label for="wordSelect">Kategorie:</label></td>
@@ -461,22 +529,22 @@ if (gespeicherteKategorien) {
     <p>Hier kannst du deine Einstellungen anpassen.</p>
      <!-- Füge hier deine Einstellungsfelder hinzu -->
       <!-- Einstellungsfeld für dynamische Kategorien -->
-<hr style="margin: 20px 0;" />
-<h3>Kategorien verwalten</h3>
+<div id="kategorie-verwalten">
+  <h3>Kategorien verwalten</h3>
 
-<label for="typ-auswahl">Typ:</label>
-<select id="typ-auswahl" style="margin-bottom: 10px;">
-  <option value="einnahme">Einzahlung</option>
-  <option value="ausgabe">Auszahlung</option>
-</select>
+  <label for="typ-auswahl">Typ:</label>
+  <select id="typ-auswahl">
+    <option value="einnahme">Einzahlung</option>
+    <option value="ausgabe">Auszahlung</option>
+  </select>
 
-<br />
+  <input type="text" id="neue-kategorie" placeholder="Neue Kategorie..." />
 
-<input type="text" id="neue-kategorie" placeholder="Neue Kategorie..." />
-<button id="hinzufuegen-kategorie">Hinzufügen</button>
+  <button id="hinzufuegen-kategorie">Hinzufügen</button>
 
-<ul id="kategorie-liste" style="margin-top: 20px; list-style: none; padding-left: 0;"></ul>
-<!-- Einstellungsfeld für dynamische Kategorien Ende -->
+  <ul id="kategorie-liste"></ul>
+</div>
+
 
 
   </div>
@@ -530,6 +598,12 @@ if (gespeicherteKategorien) {
 
 </script>
 <!-- Hilfsfunktion für Budget aktualisieren Ende -->
+
+
+  <script src="script.js"></script>
+
+</body>
+</html>
 
 
 <!---========================= HIER HTML Ende aber ohne Schluss===========================-->
