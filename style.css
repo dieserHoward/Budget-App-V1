@@ -133,7 +133,7 @@
   align-items: center;
   gap: 1rem;
   margin: 1.5rem 0;
-  margin: 250px 0 1rem; /* oberer Abstand damit es unter Slider landet */
+  margin: 210px 0 1rem; /* oberer Abstand damit es unter Slider landet */
 }
 
 
@@ -689,7 +689,7 @@ button[type="submit"]:hover {
 /* Budget Slider Start */
 #budget-progress-container {
   position: fixed;
-  top: 190px; /* Platz unter dem Header */
+  top: 160px; /* Platz unter dem Header */
   left: 5%;
   
   width: 90%;
