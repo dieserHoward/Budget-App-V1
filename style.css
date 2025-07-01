@@ -235,6 +235,43 @@
 
 /* Popup-Overlay */
 /* Popup-Grundlayout */
+table tr:not(:last-child) td {
+  padding-bottom: 15px; /* Abstand zwischen den Zeilen */
+}
+table td {
+  margin: 0;
+  padding-top: 0;
+  padding-bottom: 0; /* Grundzustand */
+}
+
+table tr:not(:last-child) td {
+  padding-bottom: 2px; /* gleicher Abstand unten */
+}
+
+.betrag-row input,
+.kategorie-row select,
+.datum-row input[type="date"] {
+  height: 35px;
+  padding: 8px;
+  box-sizing: border-box;
+  font-size: 16px;
+  font-family: inherit;
+  line-height: 1.2;
+  flex: 1;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f7f7f7; /* leichtes Grau */
+}
+
+.betrag-row input,
+.kategorie-row select,
+.datum-row input[type="date"] {
+  font-size: 16px;
+  font-family: inherit;
+  line-height: 1.2;
+}
+
+
 #popup-overlay {
   display: none; /* ✅ damit es anfangs versteckt ist */
   position: fixed;
@@ -252,19 +289,22 @@
   background-color: white;
   padding: 20px;
   border-radius: 10px;
-  width: 300px;
+  width: 350px;
   position: relative;
 }
 
 #popup-close {
   position: absolute;
-  top: 10px;
+  top: 30px;
   right: 10px;
   border: none;
   background: none;
   font-size: 24px;
   cursor: pointer;
 }
+#popup-close:hover {
+        color: #007bff;
+      } 
 
 /* Typ Buttons */
 #typ-buttons {
@@ -353,6 +393,39 @@ button[type="submit"] {
 button[type="submit"]:hover {
   background-color: #1e6fd9; /* etwas dunkler beim Hover */
 }
+
+/* rechts neben die "Datum" "Kategorie" " und "Betrag" Felder */
+.betrag-row,
+.kategorie-row,
+.datum-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.betrag-row label,
+.kategorie-row label,
+.datum-row label {
+  /* Feste Breite für alle Labels, z.B. 90px */
+  width: 90px;
+  white-space: nowrap;
+  font-weight: bold;
+}
+
+.betrag-row input,
+.kategorie-row select,
+.datum-row input[type="date"] {
+  /* Alle Eingabefelder nehmen den Rest der Zeile ein */
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-sizing: border-box;
+}
+
+/* rechts neben die "Datum" "Kategorie" " und "Betrag" Felder Ende */
+
+/* Popup fertig */
 
 /* Dynamische Kategorien */
 #kategorie-verwalten {
@@ -1023,7 +1096,7 @@ button[type="submit"]:hover {
 
 /* virtuelles Keyboard fertig */
 
-
+/* Kein Zommen durch Doppelklick */
 html,
 body {
   touch-action: manipulation;
@@ -1032,3 +1105,4 @@ body {
 input, textarea, select {
   font-size: 16px; /* mind. 16px, sonst zoomt iOS automatisch beim Fokus */
 }
+/* Kein Zommen durch Doppelklick fertig */
