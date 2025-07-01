@@ -498,13 +498,15 @@ button[type="submit"]:hover {
   border-bottom: 1px solid #ddd;
   background-color: white;
   z-index: 10000;
+  
+  display: flex;
+  justify-content: center; /* horizontal zentrieren */
+  align-items: center;     /* vertikal zentrieren */
 }
-
 
 #header h1 {
   margin: 0;
   font-size: 1.8rem;
-  text-align: center;
 }
 
 #settings-icon {
