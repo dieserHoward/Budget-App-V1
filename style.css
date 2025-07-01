@@ -426,23 +426,21 @@ button[type="submit"]:hover {
   left: 0;
   width: 100%;
   display: flex;
-  justify-content: flex-start; /* links ausrichten */
-  gap: 12px;
-  margin: 0;
-  padding: 10px;
+  justify-content: center; /* Zentriert die Boxen */
+  gap: 12px;               /* Dynamischer Abstand */
+  padding: 10px 0;
   background-color: #f9f9f9;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  font-weight: bold;
-  flex-wrap: nowrap; /* Kein Umbruch */
-  overflow-x: auto; /* horizontal scrollen */
+  flex-wrap: nowrap;       /* Kein Zeilenumbruch */
+  overflow-x: auto;        /* Horizontales Scrollen bei Bedarf */
   -webkit-overflow-scrolling: touch; /* Smooth scroll auf iOS */
   z-index: 500;
-  scrollbar-width: thin; /* für Firefox dünner Scrollbar */
+  scrollbar-width: thin;   /* Dünner Scrollbar in Firefox */
 }
 
 .uebersicht-feld {
-  flex: 0 0 120px; /* Fixe Breite, nicht schrumpfbar */
-  min-width: 120px;
+  flex: 0 0 150px;      /* Feste Breite, nicht schrumpfbar */
+  min-width: 150px;
   max-width: 150px;
   text-align: center;
   padding: 8px;
@@ -450,18 +448,15 @@ button[type="submit"]:hover {
   background-color: white;
   box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.05);
   font-size: 1em;
+  white-space: normal;  /* Zeilenumbruch im Text erlauben */
 }
 
-
+/* Für kleinere Handys optional */
 @media (max-width: 480px) {
-  #monatsuebersicht {
-    gap: 10px;
-    padding: 8px;
-  }
-
   .uebersicht-feld {
-    flex: 0 0 auto;
-    min-width: 90px;
+    flex: 0 0 120px;
+    min-width: 120px;
+    max-width: 120px;
     font-size: 0.9em;
     padding: 6px;
   }
