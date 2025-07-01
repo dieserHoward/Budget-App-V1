@@ -1022,3 +1022,13 @@ button[type="submit"]:hover {
 
 
 /* virtuelles Keyboard fertig */
+
+
+html,
+body {
+  touch-action: manipulation;
+  overscroll-behavior: contain;
+}
+input, textarea, select {
+  font-size: 16px; /* mind. 16px, sonst zoomt iOS automatisch beim Fokus */
+}
