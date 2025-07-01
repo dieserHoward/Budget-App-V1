@@ -127,26 +127,23 @@
 
 
   #monatsteuerelemente {
-    
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 1rem;
-  margin: 1.5rem 0;
-  margin: 210px 0 1rem; /* oberer Abstand damit es unter Slider landet */
+  gap: 0.6rem;          /* kleinerer Abstand */
+  margin: 210px 0 1rem; /* oben bleibt, unten wie gehabt */
 }
-
-
 
 #monatsteuerelemente button {
   background-color: #007bff;
   color: white;
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-size: 1rem;
+  padding: 0.3rem 0.7rem;  /* kleiner gepolstert */
+  border-radius: 6px;
+  font-size: 0.85rem;      /* kleinere Schrift */
   cursor: pointer;
   transition: background-color 0.2s ease;
+  min-width: 60px;         /* fixe Mindestbreite, damit Buttons nicht zu schmal werden */
 }
 
 #monatsteuerelemente button:hover {
@@ -155,13 +152,16 @@
 
 #monatanzeige {
   font-weight: bold;
-  font-size: 1.5rem;
+  font-size: 1.1rem;        /* kleiner als vorher */
   background-color: #f0f0f0;
-  padding: 0.6rem 1.2rem;
-  border-radius: 10px;
+  padding: 0.4rem 0.8rem;   /* weniger Padding */
+  border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   user-select: none;
+  min-width: 80px;          /* damit Anzeige nicht zu schmal wird */
+  text-align: center;
 }
+
 
 
   /* Tab-Leiste unten */
