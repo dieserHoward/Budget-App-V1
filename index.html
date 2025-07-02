@@ -166,36 +166,51 @@
             </div>
           </td>
         </tr>
+        
+        </tr>
         <tr>
           <td colspan="2">
+            <div class="intervall-row">
             <label for="wiederkehrende-intervall">Intervall:</label>
             <select id="wiederkehrende-intervall" required>
               <option value="Monatsende">Monatsende</option>
               <option value="Jahresende">Jahresende</option>
               <option value="Wochenende">Wochenende</option>
             </select>
+            </div>
           </td>
         </tr>
+        
+  <tr>
+      <td colspan="2">
+        <div class="von-row">
+          <label for="wiederkehrende-start">Von:</label>
+          <input type="date" id="wiederkehrende-start" required />
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2">
+        <div class="bis-row">
+          <label for="wiederkehrende-ende">Bis:</label>
+          <input type="date" id="wiederkehrende-ende" required />
+        </div>
+      </td>
+    </tr>
         <tr>
-          <td>
-            <label for="wiederkehrende-start">Von:</label>
-            <input type="date" id="wiederkehrende-start" required />
-          </td>
-          <td>
-            <label for="wiederkehrende-ende">Bis:</label>
-            <input type="date" id="wiederkehrende-ende" required />
-          </td>
-        </tr>
-        <tr>
-          <td colspan="2">
-            <button type="submit">Speichern</button>
-          </td>
-        </tr>
+  <td colspan="2" style="padding-bottom: 10px;">
+    <button type="submit" id="speichern-btn">Speichern</button>
+  </td>
+</tr>
+<!-- Button zum Öffnen des gespeicherten Einträge-Popups -->
+<tr>
+  <td colspan="2" style="padding-top: 0;">
+    <button type="button" id="show-eintraege-btn">Gespeicherte Einträge anzeigen</button>
+  </td>
+</tr>
       </table>
     </form>
 
-    <!-- Button zum Öffnen des gespeicherten Einträge-Popups -->
-    <button type="button" id="show-eintraege-btn" style="margin-top: 15px;">Gespeicherte Einträge anzeigen</button>
   </div>
 </div>
 
@@ -395,7 +410,7 @@
   <table>
     <tr>
   <td colspan="2">
-    <div class="betrag-row">
+    <div class="betrag-row1">
       <label for="popup-betrag">Betrag:</label>
       <input type="text" id="popup-betrag" name="betrag" placeholder="Betrag (€)" readonly required />
     </div>
@@ -441,11 +456,13 @@
   </td>
 </tr>
 
+<tr>
 
+</tr>
 
     <tr>
   <td colspan="2">
-    <div class="kategorie-row">
+    <div class="kategorie-row1">
       <label for="wordSelect">Kategorie:</label>
       <select id="wordSelect">
         <option disabled selected>Keine Wörter verfügbar</option>
@@ -453,12 +470,10 @@
     </div>
   </td>
 </tr>
-<td>
 
-</td>
     <tr>
   <td colspan="2">
-    <div class="datum-row">
+    <div class="datum-row1">
       <label for="popup-datum">Datum:</label>
       <input type="date" id="popup-datum" name="datum" required />
     </div>
@@ -732,7 +747,7 @@ if (gespeicherteKategorien) {
 </html>
 
 
-
+      
 <!---========================= HIER HTML Ende aber ohne Schluss===========================-->
 
 
