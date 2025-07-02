@@ -1106,3 +1106,386 @@ input, textarea, select {
   font-size: 16px; /* mind. 16px, sonst zoomt iOS automatisch beim Fokus */
 }
 /* Kein Zommen durch Doppelklick fertig */
+
+
+/* ============== Wiederkehrende Zahlungen Popup ============== */
+.hidden {
+  display: none !important;
+}
+
+.overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+}
+
+.popup {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 500px;
+  position: relative;
+}
+
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+#wiederkehrende-liste li {
+  margin: 8px 0;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 4px;
+}
+
+.edit-btn, .delete-btn {
+  margin-left: 10px;
+  cursor: pointer;
+  font-size: 0.9em;
+  background: none;
+  border: none;
+  color: #0077cc;
+}
+.edit-btn:hover, .delete-btn:hover {
+  text-decoration: underline;
+}
+
+
+/* Tastatur für Popup */
+.virtual-keyboard {
+  margin-top: 10px;
+  user-select: none;
+}
+
+.vk-row {
+  display: flex;
+  height: 44px;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.vk-btn {
+  flex: 1;
+  margin: 0 3px;
+  padding: 12px 0;
+  font-size: 18px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background-color: #f0f0f0;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  transition: background-color 0.2s;
+  user-select: none;
+  color: black;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.vk-btn.operator {
+  background-color: #d6d6d6;
+}
+
+.vk-btn.comma,
+.vk-btn.backspace {
+  background-color: #d6d6d6;
+}
+
+.vk-btn.backspace {
+  color: #dc3545;
+}
+
+.vk-btn.ok-btn {
+  background-color: #28a745;
+  color: white;
+  font-weight: bold;
+}
+
+.vk-btn:hover {
+  background-color: #cccccc73;
+}
+
+.vk-btn.ok-btn:hover {
+  background-color: #218838;
+  color: white;
+}
+
+.vk-btn.comma:hover,
+.vk-btn.backspace:hover {
+  background-color: #cccccc73;
+}
+
+#wiederkehrende-liste {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#wiederkehrende-liste li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 5px rgb(0 0 0 / 0.05);
+  transition: background-color 0.3s ease;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 1rem;
+}
+
+#wiederkehrende-liste li:hover {
+  background-color: #e6f0ff;
+}
+
+#wiederkehrende-liste strong {
+  text-transform: capitalize;
+  margin-right: 8px;
+  color: #333;
+}
+
+#wiederkehrende-liste button.edit-btn,
+#wiederkehrende-liste button.delete-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  margin-left: 10px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  color: #0077cc;
+  display: flex;
+  align-items: center;
+}
+
+#wiederkehrende-liste button.edit-btn:hover {
+  background-color: #d0e7ff;
+  color: #004a99;
+}
+
+#wiederkehrende-liste button.delete-btn {
+  color: #dc3545;
+}
+
+#wiederkehrende-liste button.delete-btn:hover {
+  background-color: #f8d7da;
+  color: #a71d2a;
+}
+
+/* Icons für Buttons */
+#wiederkehrende-liste button.edit-btn::before {
+  content: "✏️";
+  margin-right: 6px;
+}
+
+#wiederkehrende-liste button.delete-btn::before {
+  content: "🗑️";
+  margin-right: 6px;
+}
+
+/* Popup-Liste bleibt unverändert, siehe vorherige Antwort */
+
+/* Popup-Grundlayout angepasst wie beim zweiten Popup */
+#wiederkehrende-popup {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 350px;
+  position: relative;
+}
+
+/* Close Button */
+#wiederkehrende-popup .close-btn {
+  position: absolute;
+  top: 30px;
+  right: 10px;
+  border: none;
+  background: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+#wiederkehrende-popup .close-btn:hover {
+  color: #007bff;
+}
+
+/* Typ Buttons */
+#wiederkehrende-popup #typ-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+#wiederkehrende-popup .typ-btn {
+  flex: 1;
+  padding: 12px 16px;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  background-color: #f8f9fa;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+#wiederkehrende-popup .typ-btn[data-typ="einnahme"] {
+  border-color: #28a745;
+  color: #28a745;
+}
+#wiederkehrende-popup .typ-btn[data-typ="einnahme"]:hover {
+  background-color: rgba(40, 167, 69, 0.1);
+}
+#wiederkehrende-popup .typ-btn.active[data-typ="einnahme"] {
+  background-color: #28a745;
+  color: white;
+}
+
+#wiederkehrende-popup .typ-btn[data-typ="ausgabe"] {
+  border-color: #dc3545;
+  color: #dc3545;
+}
+#wiederkehrende-popup .typ-btn[data-typ="ausgabe"]:hover {
+  background-color: rgba(220, 53, 69, 0.1);
+}
+#wiederkehrende-popup .typ-btn.active[data-typ="ausgabe"] {
+  background-color: #dc3545;
+  color: white;
+}
+
+/* Formular Tabelle */
+#wiederkehrende-popup table {
+  width: 100%;
+  margin-bottom: 10px;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+}
+
+#wiederkehrende-popup td {
+  padding: 0 10px 5px 0;
+  vertical-align: middle;
+}
+
+/* Labels */
+.betrag-row label,
+#wiederkehrende-popup label {
+  width: 90px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+/* Inputs */
+.betrag-row input,
+#wiederkehrende-popup select,
+#wiederkehrende-popup input[type="date"] {
+  height: 35px;
+  padding: 8px;
+  font-size: 16px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  background-color: #f7f7f7;
+  box-sizing: border-box;
+  flex: 1;
+}
+
+/* Button Speichern */
+#wiederkehrende-popup button[type="submit"] {
+  width: 100%;
+  background-color: #2e86de;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 15px;
+}
+
+#wiederkehrende-popup button[type="submit"]:hover {
+  background-color: #1e6fd9;
+}
+
+#wiederkehrende-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.form-row label {
+  width: 90px;
+  font-weight: bold;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.form-row input,
+.form-row select {
+  flex: 1;
+  height: 35px;
+  padding: 8px;
+  font-size: 16px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  background-color: #f7f7f7;
+  box-sizing: border-box;
+}
+
+#wiederkehrende-form > button[type="submit"] {
+  background-color: #2e86de;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 10px;
+  width: 100%;
+}
+
+#wiederkehrende-form > button[type="submit"]:hover {
+  background-color: #1e6fd9;
+}
+
+#show-eintraege-btn {
+  background-color: transparent;
+  border: 2px solid #2e86de; /* gleiche Farbe wie „Hinzufügen“-Button */
+  color: #2e86de;
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#show-eintraege-btn:hover {
+  background-color: #2e86de;
+  color: white;
+}
+
+
+/* Kleinere Anpassung für neues Popup */
+#eintraege-popup-overlay .popup {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+/* =============== Wiederkehrende Zahlungen Popup fertig ====================== */
