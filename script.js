@@ -244,6 +244,38 @@ tagDiv.addEventListener("click", () => {
   berechneMonatsuebersicht(jahr, monat);
 }
 
+// Swipe-Funktionalität für Kalender Start
+let touchStartX = 0;
+let touchEndX = 0;
+
+const kalenderElement = document.getElementById("kalender");
+
+kalenderElement.addEventListener("touchstart", (e) => {
+  touchStartX = e.changedTouches[0].screenX;
+});
+
+kalenderElement.addEventListener("touchend", (e) => {
+  touchEndX = e.changedTouches[0].screenX;
+  handleSwipe();
+});
+
+function handleSwipe() {
+  const swipeDist = touchEndX - touchStartX;
+  
+  if (Math.abs(swipeDist) < 50) return; // kleiner Swipe → ignorieren
+
+  if (swipeDist < 0) {
+    // Nach links gewischt → nächster Monat
+    aktuellesDatum.setMonth(aktuellesDatum.getMonth() + 1);
+  } else {
+    // Nach rechts gewischt → vorheriger Monat
+    aktuellesDatum.setMonth(aktuellesDatum.getMonth() - 1);
+  }
+
+  renderKalender();
+}
+// Swipe-Funktionalität für Kalender Ende
+
 
   // Saldo für Datum (Einnahmen - Ausgaben)
   function berechneSaldoFuerDatum(datumStr) {
