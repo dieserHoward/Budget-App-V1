@@ -1607,7 +1607,7 @@ input, textarea, select {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .betrag-row label,
   .intervall-row label,
   .von-row label,
@@ -1615,7 +1615,7 @@ input, textarea, select {
     width: auto;
     margin-bottom: 4px;
   }
-  
+
   .betrag-row input,
   .intervall-row select,
   .von-row input,
@@ -1623,6 +1623,7 @@ input, textarea, select {
     max-width: 100%;
   }
 }
+
 
 
 
