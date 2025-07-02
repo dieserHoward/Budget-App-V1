@@ -1,6 +1,6 @@
 {
-  "name": "Mein App-Name",
-  "short_name": "AppName",
+  "name": "Budget Manager",
+  "short_name": "Budget.Mgr",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
