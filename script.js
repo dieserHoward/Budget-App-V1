@@ -957,8 +957,8 @@ document.addEventListener("DOMContentLoaded", () => {
       li.innerHTML = `
         <strong>${eintrag.typ}</strong>: ${eintrag.betrag} € –
         ${eintrag.intervall} (${eintrag.start} bis ${eintrag.ende})
-        <button class="edit-btn" data-index="${index}">Bearbeiten</button>
-        <button class="delete-btn" data-index="${index}">Löschen</button>
+        <button class="edit-btn" data-index="${index}"></button>
+        <button class="delete-btn" data-index="${index}"></button>
       `;
       liste.appendChild(li);
     });
