@@ -247,6 +247,21 @@ table tr:not(:last-child) td {
 }
 
 .betrag-row input,
+.datum-row input[type="date"] {
+  height: 35px;
+  padding: 8px;
+  box-sizing: border-box;
+  font-size: 16px;
+  font-family: inherit;
+  line-height: 1.2;
+  flex: 1;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin-bottom: -20px; /* kleiner Abstand zur nächsten Zeile */
+  background-color: #f7f7f7; /* leichtes Grau */
+}
+
+
 .kategorie-row select,
 .datum-row input[type="date"] {
   height: 35px;
@@ -262,7 +277,10 @@ table tr:not(:last-child) td {
   background-color: #f7f7f7; /* leichtes Grau */
 }
 
-.betrag-row1 input{
+
+.betrag-row1 input,
+.kategorie-row2 input {
+
   height: 35px;
   padding: 8px;
   box-sizing: border-box;
@@ -301,7 +319,7 @@ table tr:not(:last-child) td {
 }
 
 .betrag-row1 input,
-.kategorie-row1 select,
+.kategorie-row2 select,
 .datum-row1 input[type="date"] {
   font-size: 16px;
   font-family: inherit;
@@ -449,7 +467,13 @@ button[type="submit"]:hover {
   gap: 10px;
 }
 
-.betrag-row label,
+.kategorie-row2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+
 .kategorie-row label,
 .datum-row label {
   /* Feste Breite für alle Labels, z.B. 90px */
@@ -457,6 +481,14 @@ button[type="submit"]:hover {
   white-space: nowrap;
   font-weight: bold;
   margin-bottom: -13px;
+}
+
+.betrag-row label {
+  /* Feste Breite für alle Labels, z.B. 90px */
+  width: 90px;
+  white-space: nowrap;
+  font-weight: bold;
+  margin-bottom: -20px;
 }
 
 .betrag-row1 label {
@@ -1239,7 +1271,8 @@ input, textarea, select {
 
 /* Tastatur für Popup */
 .virtual-keyboard {
-  margin-top: 10px;
+  margin-top: 25px;
+  margin-bottom: -10px;
   user-select: none;
 }
 
@@ -1583,9 +1616,21 @@ input, textarea, select {
   margin-left: 0;
 }
 
+
+.kategorie-row2 label {
+  width: 90px;
+  font-weight: bold;
+  white-space: nowrap;
+  text-align: left;
+  margin-right: 10px;  /* Abstand zum Input */
+  margin-left: 0;
+  margin-bottom: -10px;
+}
+
 /* Eingabefelder alle gleich breit, angepasst an Popup */
 .betrag-row input,
 .intervall-row select,
+.kategorie-row2 input,
 .von-row input,
 .bis-row input {
   flex: 1;
@@ -1603,6 +1648,7 @@ input, textarea, select {
 @media (max-width: 600px) {
   .betrag-row,
   .intervall-row,
+  .kategorie-row2,
   .von-row,
   .bis-row {
     flex-direction: row !important;     /* ❗ wichtig: erzwingt horizontale Anordnung */
@@ -1617,8 +1663,14 @@ input, textarea, select {
     margin-bottom: 0 !important;
   }
 
+  .kategorie-row2 label {
+    width: 90px !important;
+    margin-bottom: -20px !important;
+  }
+
   .betrag-row input,
   .intervall-row select,
+  .kategorie-row2 input,
   .von-row input,
   .bis-row input {
     max-width: 220px !important;
@@ -1630,10 +1682,26 @@ input, textarea, select {
 
 
 /* Kleinere Anpassung für neues Popup */
-#eintraege-popup-overlay .popup {
-  margin-top: -15px;
-  max-height: 80vh;
-  overflow-y: auto;
+
+#eintraege-popup-overlay .popup ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-width: 700px;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
 }
+
+#eintraege-popup-overlay .popup ul li button {
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  font-size: 1.2em;
+}
+
+#eintraege-popup-overlay .popup ul li button:hover {
+  opacity: 0.7;
+}
+
 
 /* =============== Wiederkehrende Zahlungen Popup fertig ====================== */
