@@ -18,6 +18,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -103,6 +104,113 @@
   </div>
 </div>
 <!-- Budget-Verwaltungs Popup Ende -->
+
+<!-- ================= POPUP: Wiederkehrende Zahlungen ================= -->
+<div id="wiederkehrende-popup-overlay" class="overlay hidden">
+  <div id="wiederkehrende-popup" class="popup">
+    <button class="close-btn" id="wiederkehrende-close">×</button>
+    <h2>Wiederkehrende Zahlung</h2>
+
+    <!-- Buttons für Typ -->
+    <div id="typ-buttons">
+      <button type="button" class="typ-btn" data-typ="einnahme">Einzahlung</button>
+      <button type="button" class="typ-btn" data-typ="ausgabe">Auszahlung</button>
+    </div>
+
+    <!-- Verstecktes Input für Typ -->
+    <input type="hidden" id="wiederkehrende-typ" required>
+
+    <form id="wiederkehrende-form">
+      <table>
+        <tr>
+          <td colspan="2">
+            <div class="betrag-row">
+              <label for="wiederkehrende-betrag">Betrag (€):</label>
+              <input type="text" id="wiederkehrende-betrag" required readonly />
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2">
+            <div id="vk-wiederkehrende" class="virtual-keyboard" style="display:none;">
+              <div class="vk-row">
+                <button type="button" class="vk-btn operator">+</button>
+                <button type="button" class="vk-btn operator">-</button>
+                <button type="button" class="vk-btn operator">×</button>
+                <button type="button" class="vk-btn operator">÷</button>
+              </div>
+              <div class="vk-row">
+                <button type="button" class="vk-btn">7</button>
+                <button type="button" class="vk-btn">8</button>
+                <button type="button" class="vk-btn">9</button>
+                <button type="button" id="vk-equal" class="vk-btn operator">=</button>
+              </div>
+              <div class="vk-row">
+                <button type="button" class="vk-btn">4</button>
+                <button type="button" class="vk-btn">5</button>
+                <button type="button" class="vk-btn">6</button>
+                <button type="button" class="vk-btn comma">,</button>
+              </div>
+              <div class="vk-row">
+                <button type="button" class="vk-btn">1</button>
+                <button type="button" class="vk-btn">2</button>
+                <button type="button" class="vk-btn">3</button>
+                <button type="button" id="vk-backspace" class="vk-btn backspace">←</button>
+              </div>
+              <div class="vk-row">
+                <div style="flex:1"></div>
+                <button type="button" class="vk-btn">0</button>
+                <div style="flex:1"></div>
+                <button type="button" id="vk-ok" class="vk-btn ok-btn">OK</button>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2">
+            <label for="wiederkehrende-intervall">Intervall:</label>
+            <select id="wiederkehrende-intervall" required>
+              <option value="Monatsende">Monatsende</option>
+              <option value="Jahresende">Jahresende</option>
+              <option value="Wochenende">Wochenende</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <label for="wiederkehrende-start">Von:</label>
+            <input type="date" id="wiederkehrende-start" required />
+          </td>
+          <td>
+            <label for="wiederkehrende-ende">Bis:</label>
+            <input type="date" id="wiederkehrende-ende" required />
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2">
+            <button type="submit">Speichern</button>
+          </td>
+        </tr>
+      </table>
+    </form>
+
+    <!-- Button zum Öffnen des gespeicherten Einträge-Popups -->
+    <button type="button" id="show-eintraege-btn" style="margin-top: 15px;">Gespeicherte Einträge anzeigen</button>
+  </div>
+</div>
+
+
+<!-- Neues Popup für gespeicherte Einträge -->
+<div id="eintraege-popup-overlay" class="overlay hidden">
+  <div class="popup" style="max-width: 400px;">
+    <button class="close-btn" id="eintraege-close">×</button>
+    <h3>Gespeicherte Einträge</h3>
+    <ul id="wiederkehrende-liste"></ul>
+  </div>
+</div>
+
+<!-- ================= POPUP: Wiederkehrende Zahlungen Ende ================= -->
+
 
   </div>
 
