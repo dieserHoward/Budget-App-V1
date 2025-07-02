@@ -1599,30 +1599,32 @@ input, textarea, select {
 }
 
 /* Responsive fallback für kleine Bildschirme */
-@media (max-width: 400px) {
+/* Responsive Design angepasst: immer nebeneinander */
+@media (max-width: 600px) {
   .betrag-row,
   .intervall-row,
   .von-row,
   .bis-row {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row !important;     /* ❗ wichtig: erzwingt horizontale Anordnung */
+    align-items: center !important;
   }
 
   .betrag-row label,
   .intervall-row label,
   .von-row label,
   .bis-row label {
-    width: auto;
-    margin-bottom: 4px;
+    width: 90px !important;
+    margin-bottom: 0 !important;
   }
 
   .betrag-row input,
   .intervall-row select,
   .von-row input,
   .bis-row input {
-    max-width: 100%;
+    max-width: 220px !important;
   }
 }
+
 
 
 
