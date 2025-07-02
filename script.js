@@ -789,56 +789,263 @@ document.getElementById('refresh-icon').addEventListener('keydown', (e) => {
 
 
 // Virtuelle Tastatur für mobile Geräte Start
-const popupBetragInput = document.getElementById("popup-betrag");
-const vk = document.getElementById("virtual-keyboard");
-const vkButtons = vk.querySelectorAll(".vk-btn");
-const vkOk = document.getElementById("vk-ok");
-const vkBackspace = document.getElementById("vk-backspace");
-const vkEqual = document.getElementById("vk-equal");
+// Virtuelle Tastatur für mobile Geräte Start
+let activeInput = null;
+let activeKeyboard = null;
 
-// Öffne virtuelle Tastatur wenn Input fokussiert wird
-popupBetragInput.addEventListener("click", () => {
-  vk.style.display = "block";
-});
+function setupKeyboard(inputId, keyboardId) {
+  const input = document.getElementById(inputId);
+  const keyboard = document.getElementById(keyboardId);
+  const vkButtons = keyboard.querySelectorAll(".vk-btn");
 
-
-// Buttons belegen
-vkButtons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    if (btn.id === "vk-ok") {
-      vk.style.display = "none";
-      popupBetragInput.blur();
-      return;
-    }
-
-    if (btn.id === "vk-backspace") {
-      popupBetragInput.value = popupBetragInput.value.slice(0, -1);
-      return;
-    }
-
-    if (btn.id === "vk-equal") {
-      try {
-        // Für Berechnung: Komma zu Punkt tauschen
-        let expr = popupBetragInput.value
-          .replace(/×/g, "*")
-          .replace(/÷/g, "/")
-          .replace(/,/g, ".");
-
-        let result = Function(`"use strict"; return (${expr})`)();
-
-        if (typeof result === "number" && !isNaN(result)) {
-          // Ergebnis als String, Punkt zurück zu Komma
-          popupBetragInput.value = result.toFixed(2).replace(".", ",");
-        }
-      } catch (e) {
-        alert("Ungültiger Ausdruck");
-      }
-      return;
-    }
-
-    // Beim Eingeben: Zeichen so in den Input einfügen wie sie auf Button sind (Komma bleibt Komma)
-    popupBetragInput.value += btn.textContent;
+  input.addEventListener("click", () => {
+    activeInput = input;
+    activeKeyboard = keyboard;
+    keyboard.style.display = "block";
   });
-});
+
+  vkButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (!activeInput) return;
+
+      if (btn.id === "vk-ok") {
+        activeKeyboard.style.display = "none";
+        activeInput.blur();
+        activeInput = null;
+        activeKeyboard = null;
+        return;
+      }
+
+      if (btn.id === "vk-backspace") {
+        activeInput.value = activeInput.value.slice(0, -1);
+        return;
+      }
+
+      if (btn.id === "vk-equal") {
+        try {
+          let expr = activeInput.value
+            .replace(/×/g, "*")
+            .replace(/÷/g, "/")
+            .replace(/,/g, ".");
+
+          let result = Function(`"use strict"; return (${expr})`)();
+
+          if (typeof result === "number" && !isNaN(result)) {
+            activeInput.value = result.toFixed(2).replace(".", ",");
+          }
+        } catch (e) {
+          alert("Ungültiger Ausdruck");
+        }
+        return;
+      }
+
+      activeInput.value += btn.textContent;
+    });
+  });
+
+  // Schließen, wenn außerhalb geklickt
+  document.addEventListener("click", (e) => {
+    if (activeKeyboard && !activeKeyboard.contains(e.target) && e.target !== activeInput) {
+      activeKeyboard.style.display = "none";
+      activeInput = null;
+      activeKeyboard = null;
+    }
+  });
+}
+
+// Setup für altes Popup
+setupKeyboard("popup-betrag", "virtual-keyboard");
+// Setup für neues Popup
+setupKeyboard("wiederkehrende-betrag", "vk-wiederkehrende");
+
 // Virtuelle Tastatur für mobile Geräte Ende
 
+// Virtuelle Tastatur für mobile Geräte Ende
+
+
+// ========================= Wiederkehrende Zahlungen Popup Start =========================
+document.addEventListener("DOMContentLoaded", () => {
+  const popupOverlay = document.getElementById("wiederkehrende-popup-overlay");
+  const openBtn = document.getElementById("open-wiederkehrende-popup");
+  const closeBtn = document.getElementById("wiederkehrende-close");
+  const form = document.getElementById("wiederkehrende-form");
+  const liste = document.getElementById("wiederkehrende-liste");
+  const eintraegeOverlay = document.getElementById("eintraege-popup-overlay");
+  const showEintraegeBtn = document.getElementById("show-eintraege-btn");
+  const eintraegeCloseBtn = document.getElementById("eintraege-close");
+
+  const typButtons = document.querySelectorAll(".typ-btn");
+  const typInput = document.getElementById("wiederkehrende-typ");
+
+  const wiederkehrendeInput = document.getElementById("wiederkehrende-betrag");
+  const vk = document.getElementById("vk-wiederkehrende");
+
+  let eintraege = [];
+  let bearbeiteIndex = null;
+
+  // Daten aus localStorage laden
+  const gespeicherte = localStorage.getItem("wiederkehrendeEintraege");
+  if (gespeicherte) {
+    eintraege = JSON.parse(gespeicherte);
+    renderEintraege();
+  }
+
+  // Typ Buttons EventListener
+  typButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      typInput.value = btn.dataset.typ;
+      typButtons.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+    });
+  });
+
+  openBtn?.addEventListener("click", () => {
+    popupOverlay.classList.remove("hidden");
+    resetForm();
+  });
+
+  closeBtn.addEventListener("click", () => {
+    popupOverlay.classList.add("hidden");
+    resetForm();
+  });
+
+  // Popup schließen, wenn außerhalb (auf Overlay) geklickt wird
+  popupOverlay.addEventListener("click", (event) => {
+    if (!event.target.closest(".popup")) {
+      popupOverlay.classList.add("hidden");
+      resetForm();
+    }
+  });
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const typ = typInput.value;
+    const betrag = wiederkehrendeInput.value;
+    const intervall = document.getElementById("wiederkehrende-intervall").value;
+    const start = document.getElementById("wiederkehrende-start").value;
+    const ende = document.getElementById("wiederkehrende-ende").value;
+
+    if (!typ) {
+      alert("Bitte Typ auswählen!");
+      return;
+    }
+    if (!betrag) {
+      alert("Bitte Betrag eingeben!");
+      return;
+    }
+
+    const eintrag = { typ, betrag, intervall, start, ende };
+
+    if (bearbeiteIndex !== null) {
+      eintraege[bearbeiteIndex] = eintrag;
+      bearbeiteIndex = null;
+    } else {
+      eintraege.push(eintrag);
+    }
+
+    speichereEintraege();
+    renderEintraege();
+    resetForm();
+  });
+
+  function renderEintraege() {
+    liste.innerHTML = "";
+
+    eintraege.forEach((eintrag, index) => {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <strong>${eintrag.typ}</strong>: ${eintrag.betrag} € –
+        ${eintrag.intervall} (${eintrag.start} bis ${eintrag.ende})
+        <button class="edit-btn" data-index="${index}">Bearbeiten</button>
+        <button class="delete-btn" data-index="${index}">Löschen</button>
+      `;
+      liste.appendChild(li);
+    });
+
+    liste.querySelectorAll(".edit-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const index = btn.dataset.index;
+      ladeEintragZurBearbeitung(index);
+      
+      // Popup mit gespeicherten Einträgen schließen
+      document.getElementById("eintraege-popup-overlay").classList.add("hidden");
+    });
+  });
+
+    liste.querySelectorAll(".delete-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const index = btn.dataset.index;
+        eintraege.splice(index, 1);
+        speichereEintraege();
+        renderEintraege();
+      });
+    });
+  }
+
+  function ladeEintragZurBearbeitung(index) {
+    const eintrag = eintraege[index];
+    typInput.value = eintrag.typ;
+
+    typButtons.forEach(b => {
+      if (b.dataset.typ === eintrag.typ) {
+        b.classList.add("active");
+      } else {
+        b.classList.remove("active");
+      }
+    });
+
+    wiederkehrendeInput.value = eintrag.betrag;
+    document.getElementById("wiederkehrende-intervall").value = eintrag.intervall;
+    document.getElementById("wiederkehrende-start").value = eintrag.start;
+    document.getElementById("wiederkehrende-ende").value = eintrag.ende;
+    bearbeiteIndex = index;
+  }
+
+  function resetForm() {
+    form.reset();
+    bearbeiteIndex = null;
+    typInput.value = "";
+    typButtons.forEach(b => b.classList.remove("active"));
+    wiederkehrendeInput.value = "";
+  }
+
+  function speichereEintraege() {
+    localStorage.setItem("wiederkehrendeEintraege", JSON.stringify(eintraege));
+  }
+
+// Button zum Öffnen der gespeicherten Einträge Popup
+  showEintraegeBtn.addEventListener("click", () => {
+    eintraegeOverlay.classList.remove("hidden");
+  });
+
+  // Schließen-Button im Einträge-Popup
+  eintraegeCloseBtn.addEventListener("click", () => {
+    eintraegeOverlay.classList.add("hidden");
+  });
+
+  // Popup schließen, wenn außerhalb geklickt wird - für gespeicherte Einträge Popup
+  eintraegeOverlay.addEventListener("click", (event) => {
+    if (!event.target.closest(".popup")) {
+      eintraegeOverlay.classList.add("hidden");
+    }
+  });
+
+  // Popup schließen, wenn außerhalb geklickt wird - für Haupt-Popup
+  popupOverlay.addEventListener("click", (event) => {
+    if (!event.target.closest(".popup")) {
+      popupOverlay.classList.add("hidden");
+      resetForm();
+    }
+  });
+
+  // Virtuelle Tastatur-Logik (falls du noch brauchst)
+  wiederkehrendeInput.addEventListener("click", () => {
+    // Setze activeInput etc., zeige Tastatur
+    vk.style.display = "block";
+  });
+});
+
+
+
+// ========================= Wiederkehrende Zahlungen Popup Ende =========================
