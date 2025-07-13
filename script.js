@@ -43,6 +43,74 @@ if (openKategoriePopupBtn && kategoriePopupOverlay && kategoriePopupClose) {
     }
   });
 }
+
+const wordInput = document.getElementById("wordInput");
+const addWordBtn = document.getElementById("addWordBtn");
+const typAuswahl = document.getElementById("typ-auswahl");
+const kategorieListe = document.getElementById("kategorie-liste");
+
+function renderKategorien() {
+  kategorieListe.innerHTML = "";
+
+  const gespeicherte = JSON.parse(localStorage.getItem("kategorien")) || {
+    einnahme: [],
+    ausgabe: []
+  };
+
+  const typ = typAuswahl.value;
+  gespeicherte[typ].forEach((wort, index) => {
+    const li = document.createElement("li");
+    li.textContent = wort;
+
+    const loeschBtn = document.createElement("button");
+    loeschBtn.textContent = "×";
+    loeschBtn.style.marginLeft = "10px";
+    loeschBtn.style.color = "#c00";
+    loeschBtn.style.cursor = "pointer";
+    loeschBtn.style.background = "none";
+    loeschBtn.style.border = "none";
+    loeschBtn.addEventListener("click", () => {
+      gespeicherte[typ].splice(index, 1);
+      localStorage.setItem("kategorien", JSON.stringify(gespeicherte));
+      renderKategorien();
+    });
+
+    li.appendChild(loeschBtn);
+    kategorieListe.appendChild(li);
+  });
+}
+
+addWordBtn.addEventListener("click", () => {
+  const wort = wordInput.value.trim();
+  const typ = typAuswahl.value;
+
+  if (!wort) return;
+
+  const gespeicherte = JSON.parse(localStorage.getItem("kategorien")) || {
+    einnahme: [],
+    ausgabe: []
+  };
+
+  if (!gespeicherte[typ].includes(wort)) {
+    gespeicherte[typ].push(wort);
+    localStorage.setItem("kategorien", JSON.stringify(gespeicherte));
+  }
+
+  wordInput.value = "";
+  renderKategorien();
+});
+
+typAuswahl.addEventListener("change", renderKategorien);
+
+// Beim Öffnen des Popups gleich anzeigen
+if (openKategoriePopupBtn) {
+  openKategoriePopupBtn.addEventListener("click", () => {
+    renderKategorien();
+  });
+}
+
+
+
 // was steht in dem Popup "Kategorien Verwalten in den Einstellungen" Ende
 // Auslagerung 1.2 Ende
 
@@ -95,6 +163,182 @@ document.getElementById('popup-form').addEventListener('submit', function (e) {
 });
 
 // Auslagerung 1.3 Ende
+
+
+// ============================== Kategorien sortieren Start ===========================
+const sortierenPopupOverlay = document.getElementById("kategorie-sortieren-popup-overlay");
+const openSortierenBtn = document.getElementById("open-kategorie-sortieren-popup");
+const closeSortierenBtn = document.getElementById("kategorie-sortieren-popup-close");
+
+let aktuelleSortierTyp = "einnahme";
+
+// Popup öffnen
+openSortierenBtn.addEventListener("click", () => {
+  sortierenPopupOverlay.style.display = "flex";
+  renderSortierGruppen();
+});
+
+// Popup schließen
+closeSortierenBtn.addEventListener("click", () => {
+  sortierenPopupOverlay.style.display = "none";
+});
+
+// Tab wechseln
+document.getElementById("sort-tab-einnahme").addEventListener("click", () => {
+  aktuelleSortierTyp = "einnahme";
+  setTabActive("einnahme");
+  renderSortierGruppen();
+});
+
+document.getElementById("sort-tab-ausgabe").addEventListener("click", () => {
+  aktuelleSortierTyp = "ausgabe";
+  setTabActive("ausgabe");
+  renderSortierGruppen();
+});
+
+function setTabActive(typ) {
+  document.querySelectorAll(".sort-tab").forEach(tab => tab.classList.remove("active"));
+  document.getElementById(`sort-tab-${typ}`).classList.add("active");
+}
+
+// Gruppenspeicher (nur temporär)
+let gruppen = JSON.parse(localStorage.getItem("kategorieGruppen")) || {
+  einnahme: [],
+  ausgabe: []
+};
+
+document.getElementById("add-group-btn").addEventListener("click", () => {
+  gruppen[aktuelleSortierTyp].push({ name: "Neue Oberkategorie", items: [] });
+  renderSortierGruppen();
+});
+
+// Sortiergruppen rendern
+function renderSortierGruppen() {
+  const container = document.getElementById("sortier-container");
+  container.innerHTML = "";
+
+  const gespeicherte = JSON.parse(localStorage.getItem("kategorien")) || { einnahme: [], ausgabe: [] };
+
+  // Noch nicht gruppierte Kategorien ermitteln
+  const bereitsGruppiert = gruppen[aktuelleSortierTyp].flatMap(g => g.items);
+  const nichtGruppiert = gespeicherte[aktuelleSortierTyp].filter(k => !bereitsGruppiert.includes(k));
+
+  // Unsortiert-Gruppe
+  const unsortiertGruppe = { name: "Nicht gruppiert", items: nichtGruppiert };
+  const alleGruppen = [unsortiertGruppe, ...gruppen[aktuelleSortierTyp]];
+
+  alleGruppen.forEach((gruppe, index) => {
+    const div = document.createElement("div");
+    div.className = "sortier-gruppe";
+    div.dataset.gruppeIndex = index;
+
+    // Header mit Titel + Löschen-Button (bei echten Gruppen)
+    // Header mit Titel + Löschen-Button (bei echten Gruppen)
+const header = document.createElement("div");
+header.style.position = "relative";
+header.style.marginBottom = "20px";
+header.style.height = "1.5em"; // fixiere Höhe für vertikale Ausrichtung
+
+const titel = document.createElement("h4");
+titel.style.position = "absolute";
+titel.style.left = "50%";
+titel.style.top = "50%";
+titel.style.transform = "translate(-50%, -50%)";
+titel.style.margin = "0";
+titel.style.userSelect = "text";
+titel.contentEditable = index > 0;
+titel.textContent = gruppe.name;
+header.appendChild(titel);
+
+if (index > 0) {
+  const deleteBtn = document.createElement("button");
+  deleteBtn.textContent = "×";
+  deleteBtn.title = "Gruppe löschen";
+  deleteBtn.className = "gruppe-loeschen-btn";
+  deleteBtn.style.position = "absolute";
+  deleteBtn.style.top = "50%";
+  deleteBtn.style.right = "0";
+  deleteBtn.style.transform = "translateY(-50%)";
+  deleteBtn.style.background = "transparent";
+  deleteBtn.style.border = "none";
+  deleteBtn.style.color = "#c00";
+  deleteBtn.style.fontSize = "1.5rem";
+  deleteBtn.style.cursor = "pointer";
+  deleteBtn.style.userSelect = "none";
+
+  deleteBtn.addEventListener("click", () => {
+    gruppen[aktuelleSortierTyp].splice(index - 1, 1);
+    localStorage.setItem("kategorieGruppen", JSON.stringify(gruppen));
+    renderSortierGruppen();
+  });
+
+  header.appendChild(deleteBtn);
+}
+
+
+    div.appendChild(header);
+
+    // Name speichern bei Verlassen des Feldes
+    titel.addEventListener("blur", () => {
+      const neuerName = titel.textContent.trim();
+      if (index > 0 && neuerName && neuerName !== gruppe.name) {
+        gruppen[aktuelleSortierTyp][index - 1].name = neuerName;
+        localStorage.setItem("kategorieGruppen", JSON.stringify(gruppen));
+        renderSortierGruppen();
+      }
+    });
+
+    gruppe.items.forEach(item => {
+      const el = document.createElement("div");
+      el.className = "sortier-item";
+      el.draggable = true;
+      el.textContent = item;
+
+      el.addEventListener("dragstart", e => {
+        e.dataTransfer.setData("text/plain", item);
+        e.dataTransfer.setData("from", index);
+      });
+
+      div.appendChild(el);
+    });
+
+    // Drag & Drop-Ziel
+    div.addEventListener("dragover", e => e.preventDefault());
+    div.addEventListener("drop", e => {
+      const word = e.dataTransfer.getData("text/plain");
+      const fromIndex = parseInt(e.dataTransfer.getData("from"));
+      const toIndex = parseInt(div.dataset.gruppeIndex);
+
+      if (fromIndex !== toIndex) {
+        const fromGruppe = fromIndex === 0 ? unsortiertGruppe : gruppen[aktuelleSortierTyp][fromIndex - 1];
+        const toGruppe = toIndex === 0 ? unsortiertGruppe : gruppen[aktuelleSortierTyp][toIndex - 1];
+
+        const idx = fromGruppe.items.indexOf(word);
+        if (idx > -1) {
+          fromGruppe.items.splice(idx, 1);
+          toGruppe.items.push(word);
+          renderSortierGruppen();
+        }
+      }
+    });
+
+    container.appendChild(div);
+  });
+
+  localStorage.setItem("kategorieGruppen", JSON.stringify(gruppen));
+}
+
+const sortierOverlay = document.getElementById("kategorie-sortieren-popup-overlay");
+
+// Schließen bei Klick auf Overlay
+sortierOverlay.addEventListener("click", (e) => {
+  if (e.target === sortierOverlay) {
+    sortierOverlay.style.display = "none";
+  }
+});
+
+
+// ============================== Kategorien sortieren Ende ===========================
 
 
 
@@ -159,90 +403,77 @@ document.getElementById('popup-form').addEventListener('submit', function (e) {
 
   // Kalender rendern / Kalender generieren & darstellen
   function renderKalender() {
-    kalender.innerHTML = "";
-    zeigeMonat();
+  kalender.innerHTML = "";
+  zeigeMonat();
 
-    const jahr = aktuellesDatum.getFullYear();
-    const monat = aktuellesDatum.getMonth();
+  const jahr = aktuellesDatum.getFullYear();
+  const monat = aktuellesDatum.getMonth();
+  const ersterWochentag = new Date(jahr, monat, 1).getDay();
+  const startIndex = (ersterWochentag + 6) % 7;
+  const tageImMonat = new Date(jahr, monat + 1, 0).getDate();
+  const heuteStr = formatDate(new Date());
 
-    // Erster Tag des Monats (Wochentag: 0=Sonntag)
-    const ersterWochentag = new Date(jahr, monat, 1).getDay();
-    // Umrechnung auf Montag=0
-    const startIndex = (ersterWochentag + 6) % 7;
-
-    // Anzahl Tage im Monat
-    const tageImMonat = new Date(jahr, monat + 1, 0).getDate();
-
-    // Leerfelder vor Monatsbeginn
-    for(let i = 0; i < startIndex; i++) {
-      const leer = document.createElement("div");
-      leer.className = "leer";
-      kalender.appendChild(leer);
-    }
-
-    // Heute zum Vergleich
-    const heuteStr = formatDate(new Date());
-
-    // Tage rendern
-    for(let tag=1; tag <= tageImMonat; tag++) {
-      const tagDiv = document.createElement("div");
-      tagDiv.className = "tag";
-      const tagDatum = new Date(jahr, monat, tag);
-      const tagDatumStr = formatDate(tagDatum);
-
-      // Tagnummer anzeigen
-      tagDiv.textContent = tag;
-
-      // Markiere heute
-      if(tagDatumStr === heuteStr) {
-        tagDiv.classList.add("heute");
-      }
-      // Markiere ausgewählten Tag
-      if(tagDatumStr === ausgewaehltesDatum) {
-        tagDiv.classList.add("ausgewaehlt");
-      }
-
-      // Saldo für Tag berechnen
-      const saldo = berechneSaldoFuerDatum(tagDatumStr);
-      if(saldo !== 0) {
-        const saldoSpan = document.createElement("span");
-        saldoSpan.className = "saldo " + (saldo > 0 ? "positiv" : "negativ");
-        saldoSpan.textContent = (saldo > 0 ? "+" : "") + saldo.toFixed(2) + " €";
-        tagDiv.appendChild(document.createElement("br"));
-        tagDiv.appendChild(saldoSpan);
-      }
-
-      // Klick auf Tag: auswählbar
-tagDiv.addEventListener("click", () => {
-  ausgewaehltesDatum = tagDatumStr;
-  renderKalender();
-  renderListe();
-
-  // NEU: Datum in beide Formulare eintragen
-  datumInput.value = ausgewaehltesDatum;
-  popupDatum.value = ausgewaehltesDatum;
-
-  
-
-});
-
-
-
-      kalender.appendChild(tagDiv);
-    }
-
-      // Leerfelder nach Monatsende, damit Raster vollständig ist (7 Spalten)
-  const gesamtFelder = startIndex + tageImMonat;
-  const restFelder = gesamtFelder % 7 === 0 ? 0 : 7 - (gesamtFelder % 7);
-  for(let i=0; i < restFelder; i++) {
+  // Leere Zellen vor Monatsbeginn
+  for (let i = 0; i < startIndex; i++) {
     const leer = document.createElement("div");
     leer.className = "leer";
     kalender.appendChild(leer);
   }
 
-  // 🟢 Monatsübersicht aktualisieren
+  for (let tag = 1; tag <= tageImMonat; tag++) {
+    const tagDatum = new Date(jahr, monat, tag);
+    const tagDatumStr = formatDate(tagDatum);
+
+    const tagDiv = document.createElement("div");
+    tagDiv.className = "tag";
+
+    // Markierungen
+    if (tagDatumStr === heuteStr) tagDiv.classList.add("heute");
+    if (tagDatumStr === ausgewaehltesDatum) tagDiv.classList.add("ausgewaehlt");
+
+    // Innerer Aufbau: Datum + flex-container mit Saldo
+    const datumSpan = document.createElement("span");
+    datumSpan.className = "datum";
+    datumSpan.textContent = tag;
+    tagDiv.appendChild(datumSpan);
+
+    // Flex-Container für Saldo zentriert
+    const saldoContainer = document.createElement("div");
+    saldoContainer.className = "saldo-container";
+
+    const saldo = berechneSaldoFuerDatum(tagDatumStr);
+    if (saldo !== 0) {
+      const saldoSpan = document.createElement("span");
+      saldoSpan.className = "saldo " + (saldo > 0 ? "positiv" : "negativ");
+      saldoSpan.textContent = Math.abs(saldo).toFixed(2).replace(".", ",");
+      saldoContainer.appendChild(saldoSpan);
+    }
+
+    tagDiv.appendChild(saldoContainer);
+
+    tagDiv.addEventListener("click", () => {
+      ausgewaehltesDatum = tagDatumStr;
+      renderKalender();
+      renderListe();
+      datumInput.value = ausgewaehltesDatum;
+      popupDatum.value = ausgewaehltesDatum;
+    });
+
+    kalender.appendChild(tagDiv);
+  }
+
+  // Leere Felder nach Monatsende
+  const gesamtFelder = startIndex + tageImMonat;
+  const restFelder = gesamtFelder % 7 === 0 ? 0 : 7 - (gesamtFelder % 7);
+  for (let i = 0; i < restFelder; i++) {
+    const leer = document.createElement("div");
+    leer.className = "leer";
+    kalender.appendChild(leer);
+  }
+
   berechneMonatsuebersicht(jahr, monat);
 }
+
 
 // Swipe-Funktionalität für Kalender Start
 let touchStartX = 0;
@@ -310,7 +541,7 @@ function handleSwipe() {
 
 // Hilfsfunktion für Intervallprüfung
 function istIntervallFuerDatum(intervall, datum) {
-  switch(intervall) {
+  switch (intervall) {
     case 'Monatsende':
       const letzterTag = new Date(datum.getFullYear(), datum.getMonth() + 1, 0).getDate();
       return datum.getDate() === letzterTag;
@@ -319,13 +550,22 @@ function istIntervallFuerDatum(intervall, datum) {
       return datum.getDate() === 31 && datum.getMonth() === 11; // 31. Dezember
 
     case 'Wochenende':
-      // Nur Sonntag (Sonntag ist 0)
-      return datum.getDay() === 0;
+      return datum.getDay() === 0; // Sonntag
+
+    case 'Wochenanfang':
+      return datum.getDay() === 1; // Montag
+
+    case 'Monatsanfang':
+      return datum.getDate() === 1;
+
+    case 'Jahresanfang':
+      return datum.getDate() === 1 && datum.getMonth() === 0; // 1. Januar
 
     default:
       return false;
   }
 }
+
 
 
 function ladeEintraege() {
@@ -367,53 +607,84 @@ function ladeEintraege() {
 
   // Normale Einträge rendern (wie bisher)
   gefilterte.forEach((eintrag) => {
-    const li = document.createElement("li");
+  const li = document.createElement("li");
 
-    const text = `${eintrag.typ === "einnahme" ? "+" : "-"}${parseFloat(eintrag.betrag).toFixed(2)} € — ${eintrag.kategorie}`;
-    const spanText = document.createElement("span");
-    spanText.textContent = text;
-    spanText.style.color = eintrag.typ === "einnahme" ? "green" : "red";
+  const inhaltDiv = document.createElement("div");
+  inhaltDiv.className = "eintrag-zeile";
 
-    const loeschBtn = document.createElement("button");
-    loeschBtn.textContent = "X";
-    loeschBtn.title = "Eintrag löschen";
+  const betragSpan = document.createElement("span");
+  betragSpan.className = "betrag";
+  betragSpan.textContent = `${eintrag.typ === "einnahme" ? "+ " : "- "}${parseFloat(eintrag.betrag).toFixed(2).replace(".", ",")} €`;
+  betragSpan.style.color = eintrag.typ === "einnahme" ? "green" : "red";
 
-    loeschBtn.addEventListener("click", () => {
-      if (confirm("Möchten Sie diesen Eintrag wirklich löschen?")) {
-        const alleEintraege = ladeEintraege();
-        const indexOriginal = alleEintraege.findIndex(e =>
-          e.typ === eintrag.typ &&
-          e.betrag === eintrag.betrag &&
-          e.kategorie === eintrag.kategorie &&
-          e.datum === eintrag.datum
-        );
+  const kategorieSpan = document.createElement("span");
+  kategorieSpan.className = "kategorie";
+  kategorieSpan.textContent = eintrag.kategorie;
+  kategorieSpan.style.color = betragSpan.style.color; // gleiche Farbe übernehmen
 
-        if (indexOriginal !== -1) {
-          alleEintraege.splice(indexOriginal, 1);
-          localStorage.setItem('eintraege', JSON.stringify(alleEintraege));
-          berechneMonatsuebersicht(aktuellesDatum.getFullYear(), aktuellesDatum.getMonth());
-          renderKalender();
-          renderListe();
-        }
+  inhaltDiv.appendChild(betragSpan);
+  inhaltDiv.appendChild(kategorieSpan);
+
+  const loeschBtn = document.createElement("button");
+  loeschBtn.textContent = "X";
+  loeschBtn.title = "Eintrag löschen";
+
+  loeschBtn.addEventListener("click", () => {
+    if (confirm("Möchten Sie diesen Eintrag wirklich löschen?")) {
+      const alleEintraege = ladeEintraege();
+      const indexOriginal = alleEintraege.findIndex(e =>
+        e.typ === eintrag.typ &&
+        e.betrag === eintrag.betrag &&
+        e.kategorie === eintrag.kategorie &&
+        e.datum === eintrag.datum
+      );
+
+      if (indexOriginal !== -1) {
+        alleEintraege.splice(indexOriginal, 1);
+        localStorage.setItem('eintraege', JSON.stringify(alleEintraege));
+        berechneMonatsuebersicht(aktuellesDatum.getFullYear(), aktuellesDatum.getMonth());
+        renderKalender();
+        renderListe();
       }
-    });
-
-    li.appendChild(spanText);
-    li.appendChild(loeschBtn);
-    liste.appendChild(li);
+    }
   });
+
+  li.appendChild(inhaltDiv);
+  li.appendChild(loeschBtn);
+  liste.appendChild(li);
+});
+
 
   // Wiederkehrende Einträge rendern (ohne Löschen-Button, da diese anders verwaltet werden)
-  gefilterteWiederkehrende.forEach((eintrag) => {
-    const li = document.createElement("li");
-    const text = `${eintrag.typ === "einnahme" ? "+" : "-"}${parseFloat(eintrag.betrag).toFixed(2)} € — Wiederkehrend (${eintrag.intervall})`;
-    const spanText = document.createElement("span");
-    spanText.textContent = text;
-    spanText.style.color = eintrag.typ === "einnahme" ? "green" : "red";
+  // Wiederkehrende Einträge rendern (ohne Löschen-Button)
+gefilterteWiederkehrende.forEach((eintrag) => {
+  const li = document.createElement("li");
 
-    li.appendChild(spanText);
-    liste.appendChild(li);
-  });
+  const farbe = eintrag.typ === "einnahme" ? "green" : "red";
+
+  // Betrag
+  const betragSpan = document.createElement("span");
+  betragSpan.textContent = `${eintrag.typ === "einnahme" ? "+ " : "- "}${parseFloat(eintrag.betrag).toFixed(2).replace(".", ",")} €`;
+  betragSpan.className = "betrag";
+  betragSpan.style.color = farbe;
+
+  // Kategorie
+  const kategorieSpan = document.createElement("span");
+  kategorieSpan.textContent = eintrag.kategorie;
+  kategorieSpan.className = "kategorie";
+  kategorieSpan.style.color = farbe;
+
+  // Container
+  const zeile = document.createElement("div");
+  zeile.className = "eintrag-zeile";
+
+  zeile.appendChild(betragSpan);
+  zeile.appendChild(kategorieSpan);
+
+  li.appendChild(zeile);
+  liste.appendChild(li);
+});
+
 }
 
 
@@ -432,7 +703,7 @@ renderListe(); // aktualisiert Liste sofort
     e.preventDefault();
 
     const typ = formTypInput.value;
-    const betrag = parseFloat(betragInput.value);
+    const betrag = parseFloat(betragInput.value.replace(",", "."));
     const kategorie = kategorieInput.value;
     const datum = datumInput.value;
 
@@ -609,7 +880,7 @@ popupForm.addEventListener("submit", (e) => {
   e.preventDefault();
 
   const typ = popupTyp.value;
-  const betrag = parseFloat(popupBetrag.value);
+  const betrag = parseFloat(popupBetrag.value.replace(",", "."));
   const kategorie = popupKategorie.value;
   const datum = popupDatum.value;
 
@@ -785,21 +1056,6 @@ function berechneMonatsuebersicht(jahr, monat) {
     } else {
       fillElement.style.backgroundColor = "#f6a6a6";
     }
-  }
-}
-
-// Beispiel-Hilfsfunktion aus deinem Code (muss in deinem Skript existieren):
-function istIntervallFuerDatum(intervall, datum) {
-  switch(intervall) {
-    case 'Monatsende':
-      const letzterTag = new Date(datum.getFullYear(), datum.getMonth() + 1, 0).getDate();
-      return datum.getDate() === letzterTag;
-    case 'Jahresende':
-      return datum.getDate() === 31 && datum.getMonth() === 11;
-    case 'Wochenende':
-      return datum.getDay() === 0 ; // Sonntag
-    default:
-      return false;
   }
 }
 
@@ -1089,7 +1345,8 @@ function renderEintraege() {
     }
 
     addRow("Kategorie:", eintrag.kategorie);
-    addRow("Betrag:", eintrag.betrag + " €");
+    addRow("Betrag:", parseFloat(eintrag.betrag).toFixed(2).replace(".", ",") + " €");
+
     addRow("Intervall:", eintrag.intervall);
     addRow("Zeitraum:", `${eintrag.start} bis ${eintrag.ende}`);
 
