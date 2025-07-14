@@ -15,7 +15,6 @@
 
 
 <!---========================= HIER HTML ===========================-->
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -46,11 +45,12 @@
 <!-- Kategorien-Verwaltungs-Popup -->
 <div id="kategorie-popup-overlay" class="popup-overlay">
   <div id="kategorie-popup" class="popup-content" role="dialog" aria-modal="true">
-    <button id="kategorie-popup-close" class="popup-close" aria-label="Schließen">&times;</button>
+    <div class="popup-header">
+  <h3 class="popup-title">Kategorien verwalten</h3>
+  <button id="kategorie-popup-close" class="popup-close" aria-label="Schließen">&times;</button>
+</div>
 
-    <h3 class="popup-title">Kategorien verwalten</h3>
-
-    <label for="typ-auswahl">Typ:</label>
+    <label for="typ-auswahl"></label>
     <select id="typ-auswahl">
       <option value="einnahme">Einzahlung</option>
       <option value="ausgabe">Auszahlung</option>
@@ -69,16 +69,32 @@
  <!-- Budget Popup -->
 <div id="budget-popup-overlay" class="overlay hidden">
   <div id="budget-popup" class="popup">
-    <button class="close-btn" id="budget-close">&times;</button>
-    <h2>Budget festlegen</h2>
-    <p>Gib hier dein monatliches Budget ein:</p>
+    
+    <!-- Header mit Schließen-Button und Titel -->
+    <div class="popup-header">
+      <button class="close-btn" id="budget-close" aria-label="Schließen">&times;</button>
+      <h2 class="popup-title">Budget festlegen</h2>
+    </div>
+
+    <!-- Budget-Eingabe -->
     <input type="number" id="budget-input" placeholder="z. B. 1500 €" />
+
+    <!-- Buttons -->
     <div class="budget-buttons">
       <button id="save-budget">Speichern</button>
       <button id="clear-budget">Löschen</button>
     </div>
+
+    <!-- Budget-Übersicht -->
+    <div id="budget-uebersicht" class="budget-uebersicht">
+      <p><span>Feste Ausgaben:</span> <span class="betrag" id="wk-ausgaben">– €</span></p>
+      <p><span>Feste Einnahmen:</span> <span class="betrag" id="wk-einnahmen">– €</span></p>
+      <p><span>Vorgeschlagenes Budget:</span> <span class="betrag" id="vorgeschlagenes-budget">– €</span></p>
+    </div>
+
   </div>
 </div>
+
 <!-- Budget-Verwaltungs Popup Ende -->
 
 <!-- ================= POPUP: Wiederkehrende Zahlungen ================= -->
@@ -148,7 +164,10 @@
   <td colspan="2">
     <div class="kategorie-row2">
       <label for="wiederkehrende-kategorie">Kategorie:</label>
-      <input type="text" id="wiederkehrende-kategorie" placeholder="Kategorie eingeben" required />
+      <select id="wiederkehrende-kategorie" required>
+  <option disabled selected>Keine Kategorien verfügbar</option>
+</select>
+
     </div>
   </td>
 </tr>
@@ -238,17 +257,11 @@
     overflow-y: auto;
     position: relative;
   ">
-    <button id="kategorie-sortieren-popup-close" style="
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      font-size: 1.5rem;
-      cursor: pointer;
-      border: none;
-      background: transparent;
-    ">&times;</button>
+    <div class="popup-header">
+  <h3 class="popup-title">Kategorien sortieren & gruppieren</h3>
+  <button id="kategorie-sortieren-popup-close" class="close-btn" aria-label="Schließen">&times;</button>
+</div>
 
-    <h3 style="text-align: center; margin-bottom: 20px;">Kategorien sortieren & gruppieren</h3>
 
 
     <div style="text-align: center; margin-bottom: 20px;">
@@ -791,7 +804,6 @@ if (gespeicherteKategorien) {
 
 
 
-
 <!---========================= HIER HTML Ende aber ohne Schluss===========================-->
 
 
@@ -824,6 +836,3 @@ if (gespeicherteKategorien) {
 
 </body>
 </html>
-
-
-
