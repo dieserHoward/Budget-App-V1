@@ -272,17 +272,30 @@
   position: fixed;
   bottom: 110px;
   right: 20px;
+  width: 56px;
+  height: 56px;
   background: #339af0;
   color: white;
   border: none;
   border-radius: 50%;
-  width: 56px;
-  height: 56px;
-  font-size: 2rem;
+  font-size: 28px;
+  font-family: sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   cursor: pointer;
   z-index: 1000;
+  padding: 0;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
+
+#plus-button:hover {
+  background: #1c7ed6; /* dunkleres Blau */
+  box-shadow: 0 0 12px rgba(51, 154, 240, 0.6), 0 4px 12px rgba(0,0,0,0.25); /* Glow + Schatten */
+}
+
+
 
 /* Popup-Overlay */
 /* Popup-Grundlayout */
@@ -344,6 +357,8 @@ table tr:not(:last-child) td {
   margin-bottom: -10px; /* kleiner Abstand zur nächsten Zeile */
   background-color: #f7f7f7; /* leichtes Grau */
 }
+
+
 
 .kategorie-row1 select,
 .datum-row1 input[type="date"] {
@@ -588,6 +603,45 @@ button[type="submit"]:hover {
 
 /* Dynamische Kategorien */
 /* Overlay */
+.popup-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.popup-title {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #222;
+  text-align: center;
+  width: 100%;
+}
+
+
+.popup-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 1.6rem;
+  background: transparent;
+  border: none;
+  color: #000; /* schwarz */
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.popup-close:hover {
+  color: #007bff; /* blau beim Hover */
+}
+
+
+
+
 .popup-overlay {
   display: none;
   position: fixed;
@@ -611,21 +665,7 @@ button[type="submit"]:hover {
 }
 
 /* Close button */
-.popup-close {
-  position: absolute;
-  top: 10px;
-  right: 12px;
-  font-size: 1.5rem;
-  background: transparent;
-  border: none;
-  color: #888;
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
 
-.popup-close:hover {
-  color: #000;
-}
 
 /* Heading */
 .popup-title {
@@ -863,32 +903,41 @@ button[type="submit"]:hover {
   pointer-events: none;
 }
 
-/* Linkes Icon: Refresh */
-#refresh-icon {
-  font-size: 1.5rem;
-  cursor: pointer;
-  user-select: none;
-  padding: 0 0.5rem;
-  flex-shrink: 0;
-}
-
-/* Rechtes Icon: Hamburger */
+/* Refresh und Hamburger Icons start */
+/* Gemeinsame Basis */
+#refresh-icon,
 #settings-icon {
   font-size: 1.5rem;
   cursor: pointer;
   user-select: none;
   padding: 0 0.5rem;
   flex-shrink: 0;
-  margin-left: auto;    /* bleibt ganz rechts */
-  padding-right: 2rem;  /* mehr Abstand zum Rand */
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+  color: #000; /* Standard: schwarz */
 }
 
+/* Spezifisches Layout */
+#settings-icon {
+  margin-left: auto;
+  padding-right: 2rem;
+}
 
-/* Fokus für beide Icons */
-#refresh-icon:focus, #settings-icon:focus {
+/* Fokus-Stil */
+#refresh-icon:focus,
+#settings-icon:focus {
   outline: 2px solid #007bff;
   outline-offset: 2px;
 }
+
+/* Hover-Effekt: Blau + leichter Glow */
+#refresh-icon:hover,
+#settings-icon:hover {
+  color: #1c7ed6; /* dunkleres Blau */
+  text-shadow: 0 0 6px rgba(51, 154, 240, 0.6);
+}
+
+
+/* Refresh und Hamburger Icons fertig */
 
 
 /* Popup2 - Einstellungen style */
@@ -1044,15 +1093,45 @@ button[type="submit"]:hover {
 }
 
 /* Close Button */
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 20px;
+}
+
+
+.popup-title {
+  flex: 1;
+  text-align: center;
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #222;
+}
+
+
 .close-btn {
   position: absolute;
-  top: 12px;
-  right: 15px;
-  font-size: 24px;
+  top: -20px;
+  margin-top: -10px;
+  right: 12px;
+  font-size: 1.5rem;
+  color: #000;
+  background: transparent;
   border: none;
-  background: none;
   cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s ease;
 }
+
+.close-btn:hover {
+  color: #007bff;
+}
+
+
 
 /* Eingabefeld */
 #budget-input {
@@ -1094,6 +1173,40 @@ button[type="submit"]:hover {
 .budget-buttons button:hover {
   opacity: 0.9;
 }
+
+/* Budget-Übersicht im Popup */
+.budget-uebersicht {
+  margin-top: 25px;
+  background: #f9f9f9;
+  padding: 15px 20px;
+  border-radius: 10px;
+  text-align: left;
+  font-size: 15px;
+  color: #333;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.budget-uebersicht p {
+  margin: 8px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.budget-uebersicht .betrag {
+  min-width: 80px;
+  text-align: right;
+  font-weight: bold;
+  color: #222;
+}
+
+
+.budget-uebersicht span {
+  font-weight: bold;
+  color: #222;
+}
+
+
 /* Budget-Verwaltungs Popup Ende */
 
 /* Budget Slider Start */
