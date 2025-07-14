@@ -966,8 +966,9 @@ typButtons.forEach(btn => {
 //   aktualisiereKategorien(ausgabeKategorien);
 // }
 function berechneMonatsuebersicht(jahr, monat) {
-  let einnahmen = 0;
-  let ausgaben = 0;
+  let einnahmenGesamt = 0;
+  let ausgabenGesamt = 0;
+  let ausgabenNurNormal = 0;
 
   // Normale Einträge laden
   const eintraege = JSON.parse(localStorage.getItem("eintraege")) || [];
@@ -976,17 +977,16 @@ function berechneMonatsuebersicht(jahr, monat) {
     const eintragsDatum = new Date(eintrag.datum);
     if (eintragsDatum.getFullYear() === jahr && eintragsDatum.getMonth() === monat) {
       if (eintrag.typ === "einnahme") {
-        einnahmen += parseFloat(eintrag.betrag);
+        einnahmenGesamt += parseFloat(eintrag.betrag);
       } else if (eintrag.typ === "ausgabe") {
-        ausgaben += parseFloat(eintrag.betrag);
+        ausgabenGesamt += parseFloat(eintrag.betrag);
+        ausgabenNurNormal += parseFloat(eintrag.betrag); // Nur normale Ausgaben für Budget
       }
     }
   });
 
   // Wiederkehrende Einträge laden
   const wiederkehrendeEintraege = JSON.parse(localStorage.getItem("wiederkehrendeEintraege")) || [];
-
-  // Für jeden Tag im Monat prüfen, ob wiederkehrende Einträge gelten
   const tageImMonat = new Date(jahr, monat + 1, 0).getDate();
 
   for (let tag = 1; tag <= tageImMonat; tag++) {
@@ -995,12 +995,15 @@ function berechneMonatsuebersicht(jahr, monat) {
     wiederkehrendeEintraege.forEach(wEintrag => {
       const startDatum = new Date(wEintrag.start);
       const endDatum = new Date(wEintrag.ende);
+
       if (datum >= startDatum && datum <= endDatum) {
         if (istIntervallFuerDatum(wEintrag.intervall, datum)) {
+          const betrag = parseFloat(wEintrag.betrag);
           if (wEintrag.typ === "einnahme") {
-            einnahmen += parseFloat(wEintrag.betrag);
+            einnahmenGesamt += betrag;
           } else if (wEintrag.typ === "ausgabe") {
-            ausgaben += parseFloat(wEintrag.betrag);
+            ausgabenGesamt += betrag;
+            // KEINE Hinzufügung zu ausgabenNurNormal!
           }
         }
       }
@@ -1011,29 +1014,29 @@ function berechneMonatsuebersicht(jahr, monat) {
   const userBudgetText = localStorage.getItem('userBudget');
   const userBudget = parseFloat(userBudgetText) || 0;
 
-  // Monatsbudget berechnen (Budget - Ausgaben)
-  const monatlichesBudget = userBudget - ausgaben;
+  // Budgetberechnung (nur normale Ausgaben)
+  const monatlichesBudget = userBudget - ausgabenNurNormal;
 
   // DOM aktualisieren
-  document.getElementById("monat-einnahmen").textContent = einnahmen.toFixed(2) + " €";
-  document.getElementById("monat-ausgaben").textContent = ausgaben.toFixed(2) + " €";
+  document.getElementById("monat-einnahmen").textContent = einnahmenGesamt.toFixed(2) + " €";
+  document.getElementById("monat-ausgaben").textContent = ausgabenGesamt.toFixed(2) + " €";
   document.getElementById("monat-budget").textContent = monatlichesBudget.toFixed(2) + " €";
 
-  // Optional: Saldo (Einnahmen - Ausgaben)
+  // Optional: Saldo (Einnahmen - Ausgaben, inkl. wiederkehrend)
   const saldoElement = document.getElementById("monat-saldo");
   if (saldoElement) {
-    const saldo = einnahmen - ausgaben;
+    const saldo = einnahmenGesamt - ausgabenGesamt;
     saldoElement.textContent = saldo.toFixed(2) + " €";
     saldoElement.classList.remove("positiv", "negativ");
     saldoElement.classList.add(saldo >= 0 ? "positiv" : "negativ");
   }
 
-  // Budget-Slider aktualisieren
+  // Budget-Slider aktualisieren (auf Basis von ausgabenNurNormal)
   const heute = new Date();
   const aktuellerMonat = heute.getMonth();
   const aktuellesJahr = heute.getFullYear();
 
-  const ausgabenProzent = userBudget > 0 ? (ausgaben / userBudget) * 100 : 0;
+  const ausgabenProzent = userBudget > 0 ? (ausgabenNurNormal / userBudget) * 100 : 0;
   const fillElement = document.getElementById("budget-bar-fill");
   fillElement.style.width = Math.min(ausgabenProzent, 100) + "%";
 
@@ -1051,14 +1054,9 @@ function berechneMonatsuebersicht(jahr, monat) {
     }
   } else {
     zeitMarker.style.left = `100%`;
-    if (ausgabenProzent <= 100) {
-      fillElement.style.backgroundColor = "#a8e6a1";
-    } else {
-      fillElement.style.backgroundColor = "#f6a6a6";
-    }
+    fillElement.style.backgroundColor = ausgabenProzent <= 100 ? "#a8e6a1" : "#f6a6a6";
   }
 }
-
 
 
 // Textanzeige aktualisieren wie viel % ausgegeben wurde vom Budget
@@ -1085,8 +1083,47 @@ if (openBudgetBtn) {
     const savedBudget = localStorage.getItem('userBudget');
     budgetInput.value = savedBudget || '';
     budgetOverlay.classList.remove('hidden');
+
+    // === Übersicht im Popup berechnen ===
+    const heute = new Date();
+    const jahr = heute.getFullYear();
+    const monat = heute.getMonth();
+
+    const wiederkehrendeEintraege = JSON.parse(localStorage.getItem("wiederkehrendeEintraege")) || [];
+    let wkEinnahmen = 0;
+    let wkAusgaben = 0;
+
+    const tageImMonat = new Date(jahr, monat + 1, 0).getDate();
+
+    for (let tag = 1; tag <= tageImMonat; tag++) {
+      const datum = new Date(jahr, monat, tag);
+
+      wiederkehrendeEintraege.forEach(wEintrag => {
+        const startDatum = new Date(wEintrag.start);
+        const endDatum = new Date(wEintrag.ende);
+
+        if (datum >= startDatum && datum <= endDatum) {
+          if (istIntervallFuerDatum(wEintrag.intervall, datum)) {
+            const betrag = parseFloat(wEintrag.betrag);
+            if (wEintrag.typ === "einnahme") {
+              wkEinnahmen += betrag;
+            } else if (wEintrag.typ === "ausgabe") {
+              wkAusgaben += betrag;
+            }
+          }
+        }
+      });
+    }
+
+    const vorgeschlagen = wkEinnahmen - wkAusgaben;
+
+    // DOM aktualisieren
+    document.getElementById("wk-ausgaben").textContent = wkAusgaben.toFixed(2) + " €";
+    document.getElementById("wk-einnahmen").textContent = wkEinnahmen.toFixed(2) + " €";
+    document.getElementById("vorgeschlagenes-budget").textContent = vorgeschlagen.toFixed(2) + " €";
   });
 }
+
 
 // Schließt das Budget-Popup
 if (closeBudgetBtn) {
@@ -1231,10 +1268,48 @@ document.addEventListener("DOMContentLoaded", () => {
   const typInput = document.getElementById("wiederkehrende-typ");
 
   const wiederkehrendeInput = document.getElementById("wiederkehrende-betrag");
-  const vk = document.getElementById("vk-wiederkehrende");
+  const kategorieSelect = document.getElementById("wiederkehrende-kategorie");
 
   let eintraege = [];
   let bearbeiteIndex = null;
+
+  
+
+  // Hilfsfunktion für Dropdown
+  function updateKategorieDropdown(selectId, typ) {
+  const select = document.getElementById(selectId);
+  select.innerHTML = '';
+
+  const gespeicherte = JSON.parse(localStorage.getItem("kategorien")) || {
+    einnahme: [],
+    ausgabe: []
+  };
+
+  const kategorieListe = gespeicherte[typ] || [];
+
+  if (kategorieListe.length === 0) {
+    const option = document.createElement('option');
+    option.text = 'Keine Kategorien verfügbar';
+    option.disabled = true;
+    option.selected = true;
+    select.add(option);
+    return;
+  }
+
+  const defaultOption = document.createElement('option');
+  defaultOption.text = 'Bitte wählen';
+  defaultOption.disabled = true;
+  defaultOption.selected = true;
+  select.add(defaultOption);
+
+  kategorieListe.forEach(word => {
+    const option = document.createElement('option');
+    option.text = word;
+    select.add(option);
+  });
+}
+
+
 
   // Daten aus localStorage laden
   const gespeicherte = localStorage.getItem("wiederkehrendeEintraege");
@@ -1246,15 +1321,29 @@ document.addEventListener("DOMContentLoaded", () => {
   // Typ Buttons EventListener
   typButtons.forEach(btn => {
     btn.addEventListener("click", () => {
-      typInput.value = btn.dataset.typ;
+      const typ = btn.dataset.typ;
+      typInput.value = typ;
+
       typButtons.forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
+
+      updateKategorieDropdown("wiederkehrende-kategorie", typ);
     });
   });
 
   openBtn?.addEventListener("click", () => {
     popupOverlay.classList.remove("hidden");
     resetForm();
+
+    // Standard-Typ setzen
+    const defaultTyp = "einnahme";
+    typInput.value = defaultTyp;
+
+    typButtons.forEach(b => {
+      b.classList.toggle("active", b.dataset.typ === defaultTyp);
+    });
+
+    updateKategorieDropdown("wiederkehrende-kategorie", defaultTyp);
   });
 
   closeBtn.addEventListener("click", () => {
@@ -1262,7 +1351,6 @@ document.addEventListener("DOMContentLoaded", () => {
     resetForm();
   });
 
-  // Popup schließen, wenn außerhalb (auf Overlay) geklickt wird
   popupOverlay.addEventListener("click", (event) => {
     if (!event.target.closest(".popup")) {
       popupOverlay.classList.add("hidden");
@@ -1270,42 +1358,65 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
- form.addEventListener("submit", (e) => {
-  e.preventDefault();
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
 
-  const typ = typInput.value;
-  const betrag = wiederkehrendeInput.value;
-  const intervall = document.getElementById("wiederkehrende-intervall").value;
-  const start = document.getElementById("wiederkehrende-start").value;
-  const ende = document.getElementById("wiederkehrende-ende").value;
-  const kategorie = document.getElementById("wiederkehrende-kategorie").value.trim();
+    const typ = typInput.value;
+    const betrag = wiederkehrendeInput.value;
+    const intervall = document.getElementById("wiederkehrende-intervall").value;
+    const start = document.getElementById("wiederkehrende-start").value;
+    const ende = document.getElementById("wiederkehrende-ende").value;
+    const kategorie = kategorieSelect.value;
 
-  if (!typ) {
-    alert("Bitte Typ auswählen!");
-    return;
-  }
-  if (!betrag) {
-    alert("Bitte Betrag eingeben!");
-    return;
-  }
-  if (!kategorie) {
-    alert("Bitte Kategorie eingeben!");
-    return;
-  }
+    if (!typ) {
+      alert("Bitte Typ auswählen!");
+      return;
+    }
+    if (!betrag) {
+      alert("Bitte Betrag eingeben!");
+      return;
+    }
+    if (!kategorie) {
+      alert("Bitte Kategorie eingeben!");
+      return;
+    }
 
-  const eintrag = { typ, betrag, intervall, start, ende, kategorie };
+    const eintrag = { typ, betrag, intervall, start, ende, kategorie };
 
-  if (bearbeiteIndex !== null) {
-    eintraege[bearbeiteIndex] = eintrag;
+    if (bearbeiteIndex !== null) {
+      eintraege[bearbeiteIndex] = eintrag;
+      bearbeiteIndex = null;
+    } else {
+      eintraege.push(eintrag);
+    }
+
+    speichereEintraege();
+    renderEintraege();
+    resetForm();
+  });
+
+  function resetForm() {
+    form.reset();
+    typButtons.forEach(b => b.classList.remove("active"));
+    typInput.value = "";
+    kategorieSelect.innerHTML = '<option disabled selected>Kategorie wählen</option>';
     bearbeiteIndex = null;
-  } else {
-    eintraege.push(eintrag);
   }
 
-  speichereEintraege();
-  renderEintraege();
-  resetForm();
-});
+  function speichereEintraege() {
+    localStorage.setItem("wiederkehrendeEintraege", JSON.stringify(eintraege));
+  }
+
+  function renderEintraege() {
+    liste.innerHTML = "";
+    eintraege.forEach((eintrag, index) => {
+      const li = document.createElement("li");
+      li.textContent = `${eintrag.typ}: ${eintrag.betrag} €, ${eintrag.kategorie}, ${eintrag.intervall}, von ${eintrag.start} bis ${eintrag.ende}`;
+      liste.appendChild(li);
+    });
+  }
+
+
 
 
 
