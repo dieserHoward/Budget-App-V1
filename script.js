@@ -148,6 +148,12 @@ document.getElementById('popup-form').addEventListener('submit', function (e) {
   } else {
     console.warn("renderListe-Funktion nicht gefunden.");
   }
+  if (typeof zeichneStatistik === 'function') {
+    zeichneStatistik();
+  } else {
+    console.warn("zeichneStatistik-Funktion nicht gefunden.");
+  }
+
    // 👉 Monatsübersicht mit aktualisiertem Budget neu berechnen
   const heute = new Date();
   berechneMonatsuebersicht(heute.getFullYear(), heute.getMonth());
@@ -217,11 +223,22 @@ function renderSortierGruppen() {
   const container = document.getElementById("sortier-container");
   container.innerHTML = "";
 
+  // Alle Einträge laden (Typ, Kategorie, Betrag, Datum)
+  const eintraege = JSON.parse(localStorage.getItem("eintraege")) || [];
+
+  // Kategorien aus localStorage laden (nur zum Ermitteln ungruppierter Kategorien)
   const gespeicherte = JSON.parse(localStorage.getItem("kategorien")) || { einnahme: [], ausgabe: [] };
 
   // Noch nicht gruppierte Kategorien ermitteln
   const bereitsGruppiert = gruppen[aktuelleSortierTyp].flatMap(g => g.items);
   const nichtGruppiert = gespeicherte[aktuelleSortierTyp].filter(k => !bereitsGruppiert.includes(k));
+
+  // Hilfsfunktion zum Betrag finden: Summe aller Einträge der Kategorie und des aktuellen Typs
+  function findeBetrag(kategorieName) {
+    return eintraege
+      .filter(e => e.kategorie === kategorieName && e.typ === aktuelleSortierTyp)
+      .reduce((summe, e) => summe + parseFloat(e.betrag), 0);
+  }
 
   // Unsortiert-Gruppe
   const unsortiertGruppe = { name: "Nicht gruppiert", items: nichtGruppiert };
@@ -233,50 +250,55 @@ function renderSortierGruppen() {
     div.dataset.gruppeIndex = index;
 
     // Header mit Titel + Löschen-Button (bei echten Gruppen)
-    // Header mit Titel + Löschen-Button (bei echten Gruppen)
-const header = document.createElement("div");
-header.style.position = "relative";
-header.style.marginBottom = "20px";
-header.style.height = "1.5em"; // fixiere Höhe für vertikale Ausrichtung
+    const header = document.createElement("div");
+    header.style.position = "relative";
+    header.style.marginBottom = "20px";
+    header.style.height = "1.5em";
 
-const titel = document.createElement("h4");
-titel.style.position = "absolute";
-titel.style.left = "50%";
-titel.style.top = "50%";
-titel.style.transform = "translate(-50%, -50%)";
-titel.style.margin = "0";
-titel.style.userSelect = "text";
-titel.contentEditable = index > 0;
-titel.textContent = gruppe.name;
-header.appendChild(titel);
+    const titel = document.createElement("h4");
+    titel.style.position = "absolute";
+    titel.style.left = "50%";
+    titel.style.top = "50%";
+    titel.style.transform = "translate(-50%, -50%)";
+    titel.style.margin = "0";
+    titel.style.userSelect = "text";
+    titel.contentEditable = index > 0;
+    titel.textContent = gruppe.name;
+    header.appendChild(titel);
 
-if (index > 0) {
-  const deleteBtn = document.createElement("button");
-  deleteBtn.textContent = "×";
-  deleteBtn.title = "Gruppe löschen";
-  deleteBtn.className = "gruppe-loeschen-btn";
-  deleteBtn.style.position = "absolute";
-  deleteBtn.style.top = "50%";
-  deleteBtn.style.right = "0";
-  deleteBtn.style.transform = "translateY(-50%)";
-  deleteBtn.style.background = "transparent";
-  deleteBtn.style.border = "none";
-  deleteBtn.style.color = "#c00";
-  deleteBtn.style.fontSize = "1.5rem";
-  deleteBtn.style.cursor = "pointer";
-  deleteBtn.style.userSelect = "none";
+    if (index > 0) {
+      const deleteBtn = document.createElement("button");
+      deleteBtn.textContent = "×";
+      deleteBtn.title = "Gruppe löschen";
+      deleteBtn.className = "gruppe-loeschen-btn";
+      deleteBtn.style.position = "absolute";
+      deleteBtn.style.top = "50%";
+      deleteBtn.style.right = "0";
+      deleteBtn.style.transform = "translateY(-50%)";
+      deleteBtn.style.background = "transparent";
+      deleteBtn.style.border = "none";
+      deleteBtn.style.color = "#c00";
+      deleteBtn.style.fontSize = "1.5rem";
+      deleteBtn.style.cursor = "pointer";
+      deleteBtn.style.userSelect = "none";
 
-  deleteBtn.addEventListener("click", () => {
-    gruppen[aktuelleSortierTyp].splice(index - 1, 1);
-    localStorage.setItem("kategorieGruppen", JSON.stringify(gruppen));
-    renderSortierGruppen();
-  });
+      deleteBtn.addEventListener("click", () => {
+        gruppen[aktuelleSortierTyp].splice(index - 1, 1);
+        localStorage.setItem("kategorieGruppen", JSON.stringify(gruppen));
+        renderSortierGruppen();
+      });
 
-  header.appendChild(deleteBtn);
-}
-
+      header.appendChild(deleteBtn);
+    }
 
     div.appendChild(header);
+
+    // Gruppensumme berechnen mit der neuen Funktion
+    const gruppenSumme = gruppe.items.reduce((summe, kategorieName) => {
+      return summe + findeBetrag(kategorieName);
+    }, 0);
+
+    
 
     // Name speichern bei Verlassen des Feldes
     titel.addEventListener("blur", () => {
@@ -327,6 +349,7 @@ if (index > 0) {
 
   localStorage.setItem("kategorieGruppen", JSON.stringify(gruppen));
 }
+
 
 const sortierOverlay = document.getElementById("kategorie-sortieren-popup-overlay");
 
@@ -455,6 +478,7 @@ sortierOverlay.addEventListener("click", (e) => {
       ausgewaehltesDatum = tagDatumStr;
       renderKalender();
       renderListe();
+      zeichneStatistik();
       datumInput.value = ausgewaehltesDatum;
       popupDatum.value = ausgewaehltesDatum;
     });
@@ -472,6 +496,7 @@ sortierOverlay.addEventListener("click", (e) => {
   }
 
   berechneMonatsuebersicht(jahr, monat);
+  zeichneStatistik();
 }
 
 
@@ -645,6 +670,7 @@ function ladeEintraege() {
         berechneMonatsuebersicht(aktuellesDatum.getFullYear(), aktuellesDatum.getMonth());
         renderKalender();
         renderListe();
+        zeichneStatistik();
       }
     }
   });
@@ -697,6 +723,7 @@ gefilterteWiederkehrende.forEach((eintrag) => {
 
   renderKalender();
 renderListe(); // aktualisiert Liste sofort
+zeichneStatistik();
 
   // Formular absenden: neuen Eintrag hinzufügen
   form.addEventListener("submit", (e) => {
@@ -731,6 +758,10 @@ renderListe(); // aktualisiert Liste sofort
       renderListe();
     }
 
+    if (datum === ausgewaehltesDatum) {
+      zeichneStatistik();
+    }
+
     // Formular zurücksetzen
     form.reset();
 
@@ -760,93 +791,14 @@ renderListe(); // aktualisiert Liste sofort
   // Formular-Datum initial auf heute
   datumInput.value = ausgewaehltesDatum;
 
-  // STATISTIK: Balkendiagramm mit Canvas
-  function zeichneStatistik() {
-    const canvas = document.getElementById("chart");
-    const ctx = canvas.getContext("2d");
+  
 
-    // Kategorien summieren (Saldo)
-    const saldoProKategorie = {};
-    eintraege.forEach(eintrag => {
-      const k = eintrag.kategorie;
-      if (!saldoProKategorie[k]) saldoProKategorie[k] = 0;
-      saldoProKategorie[k] += (eintrag.typ === "einnahme" ? 1 : -1) * eintrag.betrag;
-    });
 
-    // Daten vorbereiten
-    const kategorien = Object.keys(saldoProKategorie);
-    const werte = kategorien.map(k => saldoProKategorie[k]);
-
-    // Canvas clear
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (kategorien.length === 0) {
-      ctx.font = "16px Arial";
-      ctx.fillText("Keine Daten für Statistik", 10, 50);
-      return;
-    }
-
-    // Balkendiagramm Parameter
-    const padding = 50;
-    const balkenBreite = 40;
-    const maxWert = Math.max(...werte.map(v => Math.abs(v)));
-
-    // Y-Achse skalieren (bis maxWert + etwas Puffer)
-    const maxY = maxWert * 1.1;
-
-    // Achsen zeichnen
-    ctx.strokeStyle = "#333";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    // Y-Achse
-    ctx.moveTo(padding, padding / 2);
-    ctx.lineTo(padding, canvas.height - padding);
-    // X-Achse
-    ctx.lineTo(canvas.width - padding / 2, canvas.height - padding);
-    ctx.stroke();
-
-    // Y-Achsen Werte + Linien (5 Schritte)
-    ctx.fillStyle = "#333";
-    ctx.font = "12px Arial";
-    ctx.textAlign = "right";
-    for (let i = 0; i <= 5; i++) {
-      const y = padding + ((canvas.height - 2 * padding) / 5) * i;
-      const wert = maxY - (maxY / 5) * i;
-      ctx.fillText(wert.toFixed(2) + "€", padding - 10, y + 4);
-
-      // Hilfslinien
-      ctx.strokeStyle = "#ddd";
-      ctx.beginPath();
-      ctx.moveTo(padding, y);
-      ctx.lineTo(canvas.width - padding / 2, y);
-      ctx.stroke();
-    }
-
-    // Balken zeichnen
-    ctx.textAlign = "center";
-    kategorien.forEach((kategorie, i) => {
-      const wert = werte[i];
-      const x = padding + 60 + i * (balkenBreite + 20);
-      const yNull = canvas.height - padding;
-      const balkenHoehe = (wert / maxY) * (canvas.height - 2 * padding);
-
-      // Balkenfarbe grün bei positiv, rot bei negativ
-      ctx.fillStyle = wert >= 0 ? "green" : "red";
-      ctx.fillRect(x, yNull - Math.max(0, balkenHoehe), balkenBreite, Math.abs(balkenHoehe));
-
-      // Kategorie unter Balken
-      ctx.fillStyle = "#000";
-      ctx.font = "14px Arial";
-      ctx.fillText(kategorie, x + balkenBreite / 2, yNull + 15);
-
-      // Wert über Balken
-      ctx.fillText(wert.toFixed(2) + "€", x + balkenBreite / 2, yNull - Math.abs(balkenHoehe) - 5);
-    });
-  }
 
   // Initial rendern
   renderKalender();
   renderListe();
+  zeichneStatistik();
 
   // Plus-Button & Popup
 const plusButton = document.getElementById("plus-button");
@@ -903,6 +855,10 @@ popupForm.addEventListener("submit", (e) => {
 
   if (datum === ausgewaehltesDatum) {
     renderListe();
+  }
+
+  if (datum === ausgewaehltesDatum) {
+    zeichneStatistik();
   }
 
   popupForm.reset();
@@ -1577,5 +1533,543 @@ deleteBtn.addEventListener("click", () => {
 
 // ========================= Wiederkehrende Zahlungen Popup Ende =========================
 
+// ========================= Statistik-Tab Start =========================
 
+// ------------------ Monats / Jahresauswahl für Statistik Start
+const statistikAnzeige = document.getElementById('zeitraum-anzeige');
+const statistikZurueck = document.getElementById('zeitraum-zurueck');
+const statistikVor = document.getElementById('zeitraum-vor');
+
+const statEinnahmen = document.getElementById('stat-einnahmen');
+const statAusgaben = document.getElementById('stat-ausgaben');
+const statBudget = document.getElementById('stat-budget');
+
+let statistikDatum = new Date(); // Nur für Statistik-Tab
+let statistikModus = 'monat';    // 'woche', 'monat', 'jahr'
+
+// Button-Auswahl (statt Select)
+const zeitraumButtons = document.querySelectorAll('.zeitraum-button');
+
+zeitraumButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    // Visuelle Hervorhebung
+    zeitraumButtons.forEach(b => b.classList.remove('active'));
+    button.classList.add('active');
+
+    // Modus setzen und Statistik aktualisieren
+    statistikModus = button.dataset.modus;
+    aktualisiereStatistik();
+  });
+});
+
+// Datumstext aktualisieren
+function updateStatistikAnzeige() {
+  if (statistikModus === 'jahr') {
+    statistikAnzeige.textContent = statistikDatum.getFullYear();
+  } else if (statistikModus === 'monat') {
+    statistikAnzeige.textContent = statistikDatum.toLocaleString('de-DE', {
+      month: 'long', year: 'numeric'
+    });
+  } else if (statistikModus === 'woche') {
+    const start = new Date(statistikDatum);
+    const end = new Date(statistikDatum);
+    start.setDate(start.getDate() - start.getDay() + 1); // Montag
+    end.setDate(start.getDate() + 6); // Sonntag
+    statistikAnzeige.textContent = `${start.toLocaleDateString('de-DE')} – ${end.toLocaleDateString('de-DE')}`;
+  }
+}
+
+// Hauptfunktion zum Aktualisieren
+function aktualisiereStatistik() {
+  updateStatistikAnzeige();
+  const eintraege = ladeStatistikDaten(statistikModus, statistikDatum);
+  const werte = berechneStatistik(eintraege);
+
+  // Anzeige aktualisieren
+  statEinnahmen.textContent = `${werte.einnahmen.toFixed(2)} €`;
+  statAusgaben.textContent = `${werte.ausgaben.toFixed(2)} €`;
+  statBudget.textContent = `${werte.budget.toFixed(2)} €`;
+
+  ladeStatistikGraph();
+}
+
+// Filtert Einträge nach Zeitraum
+function ladeStatistikDaten(modus, datum) {
+  const eintraege = JSON.parse(localStorage.getItem('eintraege')) || [];
+
+  return eintraege.filter(eintrag => {
+    const eintragsDatum = new Date(eintrag.datum);
+    const jahr = datum.getFullYear();
+    const monat = datum.getMonth();
+
+    if (modus === 'jahr') {
+      return eintragsDatum.getFullYear() === jahr;
+    }
+
+    if (modus === 'monat') {
+      return eintragsDatum.getFullYear() === jahr &&
+             eintragsDatum.getMonth() === monat;
+    }
+
+    if (modus === 'woche') {
+      const start = new Date(datum);
+      start.setDate(start.getDate() - start.getDay() + 1); // Montag
+      start.setHours(0, 0, 0, 0);
+
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      end.setHours(23, 59, 59, 999);
+
+      return eintragsDatum >= start && eintragsDatum <= end;
+    }
+
+    return false;
+  });
+}
+
+// Berechnet Summen
+function berechneStatistik(eintraege) {
+  let einnahmen = 0;
+  let ausgaben = 0;
+
+  eintraege.forEach(e => {
+    const betrag = parseFloat(e.betrag);
+    if (e.typ === 'einnahme') einnahmen += betrag;
+    if (e.typ === 'ausgabe') ausgaben += betrag;
+  });
+
+  return {
+    einnahmen,
+    ausgaben,
+    budget: einnahmen - ausgaben
+  };
+}
+
+// Navigation rückwärts
+statistikZurueck.addEventListener('click', () => {
+  if (statistikModus === 'jahr') {
+    statistikDatum.setFullYear(statistikDatum.getFullYear() - 1);
+  } else if (statistikModus === 'monat') {
+    statistikDatum.setMonth(statistikDatum.getMonth() - 1);
+  } else if (statistikModus === 'woche') {
+    statistikDatum.setDate(statistikDatum.getDate() - 7);
+  }
+  aktualisiereStatistik();
+});
+
+// Navigation vorwärts
+statistikVor.addEventListener('click', () => {
+  if (statistikModus === 'jahr') {
+    statistikDatum.setFullYear(statistikDatum.getFullYear() + 1);
+  } else if (statistikModus === 'monat') {
+    statistikDatum.setMonth(statistikDatum.getMonth() + 1);
+  } else if (statistikModus === 'woche') {
+    statistikDatum.setDate(statistikDatum.getDate() + 7);
+  }
+  aktualisiereStatistik();
+});
+
+aktualisiereStatistik(); // Initialer Aufruf
+
+// ------------------ Monats / Jahresauswahl für Statistik Ende
+
+// ------------------ Funktion für Laden der Daten je nach Sliderauswahl Start
+
+
+function ladeStatistikGraph() {
+  const daten = ladeDatenNachZeitraum(statistikDatum, statistikModus); // Zeitraum beachten
+  const gruppenData = JSON.parse(localStorage.getItem("kategorieGruppen")) || { einnahme: [], ausgabe: [] };
+
+  switch (aktiverChartIndex) {
+    case 0:
+      const gruppenSummen = getGruppenSummenAusEinnahmen(daten.einnahmen, gruppenData);
+      renderEinnahmenGraph(gruppenSummen);
+      break;
+    case 1:
+      // renderBudgetGraph(...) später hinzufügen
+      break;
+    case 2:
+      // renderAusgabenGraph(...) später hinzufügen
+      break;
+  }
+}
+
+updateStatistikAnzeige();
+ladeStatistikGraph(); // neu
+
+// ------------------ Funktion für Laden der Daten je nach Sliderauswahl Ende
+
+
+
+
+// Dummy-Funktion, die Einnahmen im Zeitraum filtert (musst du noch mit deinen Daten anpassen)
+function ladeDatenNachZeitraum(datum, modus) {
+  const alleEinnahmen = JSON.parse(localStorage.getItem("einnahmen")) || [];
+
+  return {
+    einnahmen: alleEinnahmen.filter(e => {
+      const d = new Date(e.datum);
+      if (modus === 'jahr') return d.getFullYear() === datum.getFullYear();
+      if (modus === 'monat') return d.getFullYear() === datum.getFullYear() && d.getMonth() === datum.getMonth();
+      if (modus === 'woche') {
+        const start = new Date(datum);
+        start.setDate(start.getDate() - start.getDay() + 1);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        end.setHours(23, 59, 59, 999);
+        return d >= start && d <= end;
+      }
+      return false;
+    })
+  };
+}
+
+
+// Angepasst: Gruppen-Summen nur aus den geladenen Einnahmen berechnen
+function getGruppenSummenAusEinnahmen(einnahmen, gruppenData) {
+  // gruppenData im Format { einnahme: [...], ausgabe: [...] }, jeweils Gruppen mit items (Kategorie-Namen)
+
+  // Kategorie-Beträge aus den gefilterten Einnahmen aggregieren
+  const kategorienBetrag = {};
+  einnahmen.forEach(e => {
+    kategorienBetrag[e.kategorie] = (kategorienBetrag[e.kategorie] || 0) + e.betrag;
+  });
+
+  // Summe je Gruppe berechnen
+  const bereitsGruppiert = gruppenData.einnahme.flatMap(g => g.items);
+  const nichtGruppiert = Object.keys(kategorienBetrag).filter(k => !bereitsGruppiert.includes(k));
+  
+  const unsortiertGruppe = { name: "Nicht gruppiert", items: nichtGruppiert };
+  const alleGruppen = [unsortiertGruppe, ...gruppenData.einnahme];
+
+  return alleGruppen.map(gruppe => {
+    const summe = gruppe.items.reduce((acc, kategorieName) => acc + (kategorienBetrag[kategorieName] || 0), 0);
+    return { name: gruppe.name, summe };
+  });
+}
+
+// Chart.js-Chart-Instanz (global, damit wir sie bei Aktualisierung löschen können)
+let chartEinnahmen = null;
+
+function renderEinnahmenGraph(einnahmenDaten) {
+  const gruppenData = JSON.parse(localStorage.getItem("kategorieGruppen")) || { einnahme: [], ausgabe: [] };
+  const gruppenSummen = getGruppenSummenAusEinnahmen(einnahmenDaten, gruppenData);
+
+  const ctx = document.getElementById('chart-einnahmen-canvas').getContext('2d');
+
+  // Wenn Chart schon existiert, löschen vor neuem Zeichnen
+  if (chartEinnahmen) {
+    chartEinnahmen.destroy();
+  }
+
+  chartEinnahmen = new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: gruppenSummen.map(g => g.name),
+      datasets: [{
+        label: 'Einnahmen',
+        data: gruppenSummen.map(g => g.summe),
+        backgroundColor: [
+          '#4CAF50', '#2196F3', '#FFC107', '#E91E63', '#9C27B0', '#FF5722', '#607D8B'
+        ],
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: { enabled: true }
+      }
+    }
+  });
+}
+
+// Beispiel für ladeStatistikGraph mit Aufruf renderEinnahmenGraph
+
+
+// Event-Listener für Zeitraum-Buttons
+document.querySelectorAll('.zeitraum-button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    statistikModus = btn.getAttribute('data-modus');
+
+    document.querySelectorAll('.zeitraum-button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    updateStatistikAnzeige();
+    ladeStatistikGraph();
+  });
+});
+
+// Update-Zeitanzeige (monatlich, wöchentlich, jährlich)
+function updateStatistikAnzeige() {
+  const anzeige = document.getElementById('zeitraum-anzeige');
+
+  if (statistikModus === 'jahr') {
+    anzeige.textContent = statistikDatum.getFullYear();
+  } else if (statistikModus === 'monat') {
+    anzeige.textContent = statistikDatum.toLocaleString('de-DE', { month: 'long', year: 'numeric' });
+  } else if (statistikModus === 'woche') {
+    const start = new Date(statistikDatum);
+    start.setDate(start.getDate() - start.getDay() + 1);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    anzeige.textContent = `${start.toLocaleDateString('de-DE')} – ${end.toLocaleDateString('de-DE')}`;
+  }
+}
+
+// Navigation Buttons (Zurück / Vor)
+document.getElementById('zeitraum-zurueck').addEventListener('click', () => {
+  if (statistikModus === 'jahr') {
+    statistikDatum.setFullYear(statistikDatum.getFullYear() - 1);
+  } else if (statistikModus === 'monat') {
+    statistikDatum.setMonth(statistikDatum.getMonth() - 1);
+  } else if (statistikModus === 'woche') {
+    statistikDatum.setDate(statistikDatum.getDate() - 7);
+  }
+  updateStatistikAnzeige();
+  ladeStatistikGraph();
+});
+document.getElementById('zeitraum-vor').addEventListener('click', () => {
+  if (statistikModus === 'jahr') {
+    statistikDatum.setFullYear(statistikDatum.getFullYear() + 1);
+  } else if (statistikModus === 'monat') {
+    statistikDatum.setMonth(statistikDatum.getMonth() + 1);
+  } else if (statistikModus === 'woche') {
+    statistikDatum.setDate(statistikDatum.getDate() + 7);
+  }
+  updateStatistikAnzeige();
+  ladeStatistikGraph();
+});
+
+// Initial
+updateStatistikAnzeige();
+ladeStatistikGraph();
+
+
+// Statistik 1
+
+// STATISTIK: Balkendiagramm mit Canvas
+  function zeichneStatistik() {
+  const canvas = document.getElementById("chart");
+  const ctx = canvas.getContext("2d");
+
+  // Einträge & Gruppen aus localStorage laden
+  const eintraege = JSON.parse(localStorage.getItem("eintraege")) || [];
+  const gruppen = JSON.parse(localStorage.getItem("kategorieGruppen")) || { einnahme: [], ausgabe: [] };
+  const aktuelleTyp = "einnahme"; // oder "ausgabe", je nach Tab
+
+  const gruppenListe = gruppen[aktuelleTyp];
+
+  // Gruppen-Daten berechnen: Summe aller Einträge in den Gruppenkategorien
+  const gruppenMitSummen = gruppenListe.map(gruppe => {
+    const summe = gruppe.items.reduce((acc, kategorieName) => {
+      const kategorieSumme = eintraege
+        .filter(e => e.kategorie === kategorieName && e.typ === aktuelleTyp)
+        .reduce((sum, e) => sum + parseFloat(e.betrag), 0);
+      return acc + kategorieSumme;
+    }, 0);
+    return { name: gruppe.name, summe };
+  }).filter(gr => gr.summe > 0);
+
+  // Falls keine Daten vorhanden
+  if (gruppenMitSummen.length === 0) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.font = "16px Arial";
+    ctx.fillText("Keine Daten vorhanden", 10, 50);
+    return;
+  }
+
+  // Gesamtsumme berechnen
+  const gesamt = gruppenMitSummen.reduce((sum, g) => sum + g.summe, 0);
+
+  // Farben
+  const farben = ["#36A2EB", "#FF6384", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40"];
+
+  // Kreis-Parameter
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  const radius = Math.min(canvas.width, canvas.height) / 2 - 50;
+
+  let startWinkel = 0;
+  gruppenMitSummen.forEach((gruppe, i) => {
+    const anteil = gruppe.summe / gesamt;
+    const endWinkel = startWinkel + anteil * 2 * Math.PI;
+
+    // Segment zeichnen
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, radius, startWinkel, endWinkel);
+    ctx.closePath();
+    ctx.fillStyle = farben[i % farben.length];
+    ctx.fill();
+
+    // Beschriftung
+    const mittelWinkel = (startWinkel + endWinkel) / 2;
+    const textX = cx + Math.cos(mittelWinkel) * (radius + 20);
+    const textY = cy + Math.sin(mittelWinkel) * (radius + 20);
+    ctx.fillStyle = "#000";
+    ctx.font = "14px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(gruppe.name, textX, textY);
+
+    startWinkel = endWinkel;
+  });
+}
+
+
+// Mal schauen
+let aktuellerModus = "monat";  // "woche", "monat", "jahr"
+let aktuellerZeitIndex = 0;    // Verschiebung im Zeitstrahl, 0 = aktueller Monat/Woche/Jahr
+
+function berechneZeitraum(modus, index) {
+  const heute = new Date();
+  let start, ende;
+
+  if (modus === "monat") {
+    const aktuellerMonat = heute.getMonth() + index;  // index kann negativ sein
+    const aktuellesJahr = heute.getFullYear() + Math.floor(aktuellerMonat / 12);
+    const monat = (aktuellerMonat + 12) % 12;
+
+    start = new Date(aktuellesJahr, monat, 1);
+    ende = new Date(aktuellesJahr, monat + 1, 0, 23, 59, 59);  // letzter Tag im Monat
+  } else if (modus === "woche") {
+    // Montag der Woche berechnen
+    const tag = heute.getDay() || 7;  // Sonntag=0, setze zu 7
+    const montag = new Date(heute);
+    montag.setDate(heute.getDate() - tag + 1 + index * 7);
+
+    start = new Date(montag);
+    start.setHours(0, 0, 0, 0);
+    ende = new Date(montag);
+    ende.setDate(montag.getDate() + 6);
+    ende.setHours(23, 59, 59, 999);
+  } else if (modus === "jahr") {
+    const jahr = heute.getFullYear() + index;
+    start = new Date(jahr, 0, 1);
+    ende = new Date(jahr, 11, 31, 23, 59, 59);
+  }
+
+  return { start, ende };
+}
+
+function filterEintraegeNachZeitraum(eintraege, start, ende) {
+  return eintraege.filter(e => {
+    const eintragDatum = new Date(e.datum);
+    return eintragDatum >= start && eintragDatum <= ende;
+  });
+}
+
+function filterWiederkehrendeNachZeitraum(wiederkehrende, start, ende) {
+  return wiederkehrende.filter(w => {
+    const startDatum = new Date(w.start);
+    const endeDatum = w.ende ? new Date(w.ende) : null;
+
+    // Prüfung: Zeitraum und Zahlung überschneiden sich
+    if (startDatum > ende) return false;
+    if (endeDatum && endeDatum < start) return false;
+
+    // Optional: Hier je nach Intervall prüfen, ob innerhalb Zeitraum Zahlung fällig ist
+    // Für Monatszahlung: ja, wenn Zeitraum Monat enthalten ist
+
+    // Hier für einfache Monatszahlungen zurückgeben:
+    return true;
+  });
+}
+
+function berechneSummeWiederkehrende(wiederkehrende, start, ende, kategorie, typ) {
+  let summe = 0;
+  wiederkehrende.forEach(w => {
+    if (w.kategorie !== kategorie || w.typ !== typ) return;
+
+    const startDatum = new Date(w.start);
+    const endeDatum = w.ende ? new Date(w.ende) : null;
+    if (startDatum > ende) return;
+    if (endeDatum && endeDatum < start) return;
+
+    // Intervall berechnen: z.B. "monat", "woche", "jahr"
+    const intervall = w.intervall;
+
+    // Für jeden Intervalltyp hier Beispiel für Monatsintervall:
+    if (intervall === "monat") {
+      // Wie viele Monate zwischen Start und Ende?
+      const monateZwischen = (ende.getFullYear() - startDatum.getFullYear()) * 12 + (ende.getMonth() - startDatum.getMonth()) + 1;
+      // Prüfe, wie viele Zahlungen im Zeitraum liegen
+      const monatStart = (start.getFullYear() - startDatum.getFullYear()) * 12 + (start.getMonth() - startDatum.getMonth());
+      const zahlungenImZeitraum = Math.max(0, Math.min(monateZwischen - monatStart, 1)); // nur 1 Monat hier - anpassen
+
+      summe += zahlungenImZeitraum * parseFloat(w.betrag);
+    } else if (intervall === "woche") {
+      // ähnlich wie Monat für Wochen rechnen
+    } else if (intervall === "jahr") {
+      // ähnlich für Jahre rechnen
+    } else {
+      // Falls unbekannter Intervall, ggf. 1x addieren
+      summe += parseFloat(w.betrag);
+    }
+  });
+  return summe;
+}
+
+document.querySelectorAll(".zeitraum-button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".zeitraum-button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    aktuellerModus = btn.dataset.modus;
+    aktuellerZeitIndex = 0;  // Reset bei Moduswechsel
+    aktualisiereZeitraumAnzeige();
+    ladeStatistikGraph();
+  });
+});
+
+document.getElementById("zeitraum-zurueck").addEventListener("click", () => {
+  aktuellerZeitIndex--;
+  aktualisiereZeitraumAnzeige();
+  ladeStatistikGraph();
+});
+
+document.getElementById("zeitraum-vor").addEventListener("click", () => {
+  aktuellerZeitIndex++;
+  aktualisiereZeitraumAnzeige();
+  ladeStatistikGraph();
+});
+
+function aktualisiereZeitraumAnzeige() {
+  const { start, ende } = berechneZeitraum(aktuellerModus, aktuellerZeitIndex);
+  const options = { year: "numeric", month: "long" };
+  let text = "";
+  if (aktuellerModus === "monat") {
+    text = start.toLocaleDateString("de-DE", options);
+  } else if (aktuellerModus === "woche") {
+    text = `${start.toLocaleDateString("de-DE")} - ${ende.toLocaleDateString("de-DE")}`;
+  } else if (aktuellerModus === "jahr") {
+    text = start.getFullYear().toString();
+  }
+  document.getElementById("zeitraum-anzeige").textContent = text;
+}
+
+function berechneGruppenSummen(einzeleintraege, wiederkehrendeEintraege) {
+  const summen = {}; // { "einnahme": { Kategorie1: Summe, ... }, "ausgabe": {...} }
+
+  // Hilfsfunktion zum Summieren
+  function addiere(typ, kategorie, betrag) {
+    if (!summen[typ]) summen[typ] = {};
+    if (!summen[typ][kategorie]) summen[typ][kategorie] = 0;
+    summen[typ][kategorie] += parseFloat(betrag);
+  }
+
+  // 1) Einzel-Einträge summieren
+  einzeleintraege.forEach(e => {
+    addiere(e.typ, e.kategorie, e.betrag);
+  });
+
+  // 2) Wiederkehrende Einträge summieren
+  wiederkehrendeEintraege.forEach(w => {
+    addiere(w.typ, w.kategorie, w.betrag);
+  });
+
+  return summen;
+}
 
