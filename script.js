@@ -368,8 +368,12 @@ sortierOverlay.addEventListener("click", (e) => {
 // --------------------------------- TAB SWITCHING ---
   const tabKalenderBtn = document.getElementById("tab-kalender");
   const tabStatistikBtn = document.getElementById("tab-statistik");
+  const tabuebersichtBtn = document.getElementById("tab-uebersicht");
+  const tabnotizenBtn = document.getElementById("tab-notizen");
   const tabKalenderContent = document.getElementById("tab-content-kalender");
   const tabStatistikContent = document.getElementById("tab-content-statistik");
+  const tabuebersichtContent = document.getElementById("tab-content-uebersicht");
+  const tabnotizenContent = document.getElementById("tab-content-notizen");
 
   tabKalenderBtn.addEventListener("click", () => {
     tabKalenderBtn.classList.add("active");
@@ -383,6 +387,26 @@ sortierOverlay.addEventListener("click", (e) => {
     tabKalenderContent.classList.remove("active");
     tabStatistikContent.classList.add("active");
     zeichneStatistik();
+  });
+  tabuebersichtBtn.addEventListener("click", () => {
+    tabKalenderBtn.classList.remove("active");
+    tabStatistikBtn.classList.remove("active");
+    tabuebersichtBtn.classList.add("active");
+    tabKalenderContent.classList.remove("active");
+    tabStatistikContent.classList.remove("active");
+    tabuebersichtContent.classList.add("active");
+    zeichneMonatsuebersicht();
+  });
+  tabnotizenBtn.addEventListener("click", () => { 
+    tabKalenderBtn.classList.remove("active");
+    tabStatistikBtn.classList.remove("active");
+    tabuebersichtBtn.classList.remove("active");
+    tabnotizenBtn.classList.add("active");
+    tabKalenderContent.classList.remove("active");
+    tabStatistikContent.classList.remove("active");
+    tabuebersichtContent.classList.remove("active");
+    tabnotizenContent.classList.add("active");
+    zeichneNotizen();
   });
 
   // --- DATEN ---
