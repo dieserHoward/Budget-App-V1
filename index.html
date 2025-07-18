@@ -15,6 +15,7 @@
 
 
 <!---========================= HIER HTML ===========================-->
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -320,10 +321,25 @@
 
 <!-- ================= Tabs für Navigation ================= -->
   <!-- Tabs -->
-  <div id="tabs">
-    <button id="tab-kalender" class="active">📅 Kalender</button>
-    <button id="tab-statistik">📊 Statistik</button>
+  <div id="tabs" class="tab-container">
+  <div class="tab-button" id="tab-kalender">
+    <div>📅</div>
+    <small>Kalender</small>
   </div>
+  <div class="tab-button" id="tab-statistik">
+    <div>📊</div>
+    <small>Statistik</small>
+  </div>
+  <div class="tab-button" id="tab-uebersicht">
+    <div>📋</div>
+    <small>Übersicht</small>
+  </div>
+  <div class="tab-button" id="tab-notizen">
+    <div>📝</div>
+    <small>Notizen</small>
+  </div>
+</div>
+
 
    <!-- ================= Tab-Inhalte ================= -->
   <div id="tab-content">
@@ -847,7 +863,6 @@ if (gespeicherteKategorien) {
 
 </body>
 </html>
-
 
 
 <!---========================= HIER HTML Ende aber ohne Schluss===========================-->
