@@ -225,12 +225,13 @@
 
 <!-- Neues Popup für gespeicherte Einträge -->
 <div id="eintraege-popup-overlay" class="overlay hidden">
-  <div class="popup" style="max-width: 400px;">
+  <div class="popup" style="max-width: 400px; max-height: 80vh; overflow-y: auto;">
     <button class="close-btn" id="eintraege-close">×</button>
     <h3>Gespeicherte Einträge</h3>
-    <ul id="wiederkehrende-liste"></ul>
+    <ul id="wiederkehrende-liste" style="max-height: 60vh; overflow-y: auto;"></ul>
   </div>
 </div>
+
 
 <!-- ================= POPUP: Wiederkehrende Zahlungen Ende ================= -->
 
@@ -400,21 +401,32 @@
     </div>
 
 
-    <!-- ========== Statistik-Tab ========== -->
+<!-- ========== Statistik-Tab ========== -->
     <div id="tab-content-statistik">
       
 
       <h2>Statistik</h2>
 
-      <!-- Monatsselect Statistik oben -->
-      <div id="monatsteuerelemente">
-        <button id="vorherigerMonat">&lt; Vorheriger Monat</button>
-        <div id="monatanzeige"></div>
-        <button id="naechsterMonat">Nächster Monat &gt;</button>
-      </div>
-      <!-- Monatsselect Statistik oben Ende -->
+<!-- Zeitraum Auswahl & Navigation im Statistik-Tab -->
+<!-- Zeitraum Auswahl im Button-Stil -->
+<div id="zeitraum-auswahl-buttons">
+  <button data-modus="woche" class="zeitraum-button">Woche</button>
+  <button data-modus="monat" class="zeitraum-button active">Monat</button>
+  <button data-modus="jahr" class="zeitraum-button">Jahr</button>
+</div>
 
-      <!-- Slider Ein- Ausgaben -->
+<!-- Zeitraum Navigation -->
+<div id="zeitraum-navigation">
+  <button id="zeitraum-zurueck" class="nav-button">&#x25C0;</button>
+  <span id="zeitraum-anzeige">Juli 2025</span>
+  <button id="zeitraum-vor" class="nav-button">&#x25B6;</button>
+</div>
+
+
+
+
+
+<!-- Slider Ein- Ausgaben -->
       <div class="container">
   <div class="nav" id="nav">
     <div data-pos="0">Einnahmen</div>
@@ -424,6 +436,7 @@
   </div>
 </div>
 <script>
+  document.addEventListener('DOMContentLoaded', () => {
   const nav = document.getElementById('nav');
   const underline = nav.querySelector('.underline');
   const items = nav.querySelectorAll('div[data-pos]');
@@ -434,16 +447,49 @@
       underline.style.left = (pos * 33.3333) + '%';
     });
   });
+  const chartSections = {
+  0: document.getElementById('chart-einnahmen'),
+  1: document.getElementById('chart-budget'),
+  2: document.getElementById('chart-ausgaben')
+};
+
+let aktiverChartIndex = 0;
+
+items.forEach(item => {
+  item.addEventListener('click', () => {
+    const pos = parseInt(item.getAttribute('data-pos'));
+    underline.style.left = (pos * 33.3333) + '%';
+
+    // Sichtbarkeit der Chart-Sektionen steuern
+    chartSections[aktiverChartIndex].style.display = 'none';
+    chartSections[pos].style.display = 'block';
+    aktiverChartIndex = pos;
+
+    // Optional: Daten für den neuen Graphen laden
+    ladeStatistikGraph();
+  });
+});
+});
 </script>
       <!-- Slider Ein- Ausgaben Ende -->
      
+<!-- Statistik-Graphen -->
+<div id="statistik-graph-container">
+  <div id="chart-einnahmen" class="chart-section">
+    📈 Graph für Einnahmen
+    <canvas id="chart" width="700" height="300" style="border:1px solid #ccc; border-radius:6px;"></canvas>
+  </div>
+  <div id="chart-budget" class="chart-section" style="display: none;">📊 Graph für Budget</div>
+  <div id="chart-ausgaben" class="chart-section" style="display: none;">📉 Graph für Ausgaben</div>
+</div>
 
-      <!-- Chart Tab2 Start-->
-      <canvas id="chart" width="700" height="300" style="border:1px solid #ccc; border-radius:6px;"></canvas>
+</div>
     </div>
   </div>
-  <!-- Chart Tab2 Ende-->
 
+<!-- ======================================= Statistik-Tab Ende ======================================= -->
+
+  <!-- ================= PLUS-BUTTON & Formular für Eintrag ================= -->
 <!-- ================= PLUS-BUTTON & Formular für Eintrag ================= -->
 <button id="plus-button">+</button>
 
