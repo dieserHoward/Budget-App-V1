@@ -366,48 +366,49 @@ sortierOverlay.addEventListener("click", (e) => {
 
 
 // --------------------------------- TAB SWITCHING ---
-  const tabKalenderBtn = document.getElementById("tab-kalender");
-  const tabStatistikBtn = document.getElementById("tab-statistik");
-  const tabuebersichtBtn = document.getElementById("tab-uebersicht");
-  const tabnotizenBtn = document.getElementById("tab-notizen");
-  const tabKalenderContent = document.getElementById("tab-content-kalender");
-  const tabStatistikContent = document.getElementById("tab-content-statistik");
-  const tabuebersichtContent = document.getElementById("tab-content-uebersicht");
-  const tabnotizenContent = document.getElementById("tab-content-notizen");
+  // -------------------- ALLE TABS DEFINIEREN --------------------
+const tabs = {
+  kalender: {
+    btn: document.getElementById("tab-kalender"),
+    content: document.getElementById("tab-content-kalender"),
+    onActivate: () => renderKalender()
+  },
+  statistik: {
+    btn: document.getElementById("tab-statistik"),
+    content: document.getElementById("tab-content-statistik"),
+    onActivate: () => zeichneStatistik()
+  },
+  uebersicht: {
+    btn: document.getElementById("tab-uebersicht"),
+    content: document.getElementById("tab-content-uebersicht"),
+    onActivate: () => zeichneMonatsuebersicht()  // falls das deine Wrapper-Funktion ist
+  },
+  notizen: {
+    btn: document.getElementById("tab-notizen"),
+    content: document.getElementById("tab-content-notizen"),
+    onActivate: () => zeichneNotizen()
+  }
+};
 
-  tabKalenderBtn.addEventListener("click", () => {
-    tabKalenderBtn.classList.add("active");
-    tabStatistikBtn.classList.remove("active");
-    tabKalenderContent.classList.add("active");
-    tabStatistikContent.classList.remove("active");
+// -------------------- AKTIVEN TAB WECHSELN --------------------
+function activateTab(tabName) {
+  Object.entries(tabs).forEach(([name, { btn, content }]) => {
+    const isActive = name === tabName;
+    btn.classList.toggle("active", isActive);
+    content.classList.toggle("active", isActive);
   });
-  tabStatistikBtn.addEventListener("click", () => {
-    tabKalenderBtn.classList.remove("active");
-    tabStatistikBtn.classList.add("active");
-    tabKalenderContent.classList.remove("active");
-    tabStatistikContent.classList.add("active");
-    zeichneStatistik();
-  });
-  tabuebersichtBtn.addEventListener("click", () => {
-    tabKalenderBtn.classList.remove("active");
-    tabStatistikBtn.classList.remove("active");
-    tabuebersichtBtn.classList.add("active");
-    tabKalenderContent.classList.remove("active");
-    tabStatistikContent.classList.remove("active");
-    tabuebersichtContent.classList.add("active");
-    zeichneMonatsuebersicht();
-  });
-  tabnotizenBtn.addEventListener("click", () => { 
-    tabKalenderBtn.classList.remove("active");
-    tabStatistikBtn.classList.remove("active");
-    tabuebersichtBtn.classList.remove("active");
-    tabnotizenBtn.classList.add("active");
-    tabKalenderContent.classList.remove("active");
-    tabStatistikContent.classList.remove("active");
-    tabuebersichtContent.classList.remove("active");
-    tabnotizenContent.classList.add("active");
-    zeichneNotizen();
-  });
+
+  // Tab-spezifische Funktion ausführen
+  if (tabs[tabName].onActivate) {
+    tabs[tabName].onActivate();
+  }
+}
+
+// -------------------- EVENTLISTENER REGISTRIEREN --------------------
+Object.keys(tabs).forEach(tabName => {
+  tabs[tabName].btn.addEventListener("click", () => activateTab(tabName));
+});
+
 
   // --- DATEN ---
   let eintraege = JSON.parse(localStorage.getItem("eintraege") || "[]");
