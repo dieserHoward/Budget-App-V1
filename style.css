@@ -175,6 +175,36 @@
   user-select: none;
 }
 
+#kalender div.tag .investition-anzeige {
+  margin-top: 1.2em;
+  font-size: 0.6rem;
+  color: #6f42c1; /* violett für Investitionen */
+  font-weight: 500;
+}
+
+#kalender div.tag .saldo-invest-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+  font-size: 1.7rem;
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+#kalender div.tag .saldo-invest-wrapper .saldo.positiv {
+  color: green;
+}
+#kalender div.tag .saldo-invest-wrapper .saldo.negativ {
+  color: red;
+}
+
+#kalender div.tag .saldo-invest-wrapper .investition-anzeige {
+  color: #6f42c1; /* Lila für Investition */
+  font-weight: bold;
+}
+
 
 #monatsteuerelemente {
   display: flex;
@@ -327,6 +357,13 @@ table td {
 table tr:not(:last-child) td {
   padding-bottom: 6px; /* gleicher Abstand unten */
 }
+
+.typ-btn.active {
+  background-color: #6f42c1; /* z. B. lila Hintergrund für aktive Auswahl */
+  color: white;
+  border: 2px solid #6f42c1;
+}
+
 
 .betrag-row input,
 .datum-row input[type="date"] {
@@ -491,6 +528,20 @@ table tr:not(:last-child) td {
   background-color: #dc3545;
   color: white;
 }
+
+/* Investition (lila) */
+.typ-btn[data-typ="investition"] {
+  border-color: #6f42c1;
+  color: #6f42c1;
+}
+.typ-btn[data-typ="investition"]:hover {
+  background-color: rgba(111, 66, 193, 0.1);
+}
+.typ-btn[data-typ="investition"].active {
+  background-color: #6f42c1;
+  color: white;
+}
+
 
 
 table {
@@ -1683,6 +1734,19 @@ input, textarea, select {
   color: white;
 }
 
+#wiederkehrende-popup .typ-btn[data-typ="investition"] {
+  border-color: #6f42c1;
+  color: #6f42c1;
+}
+#wiederkehrende-popup .typ-btn[data-typ="investition"]:hover {
+  background-color: rgba(111, 66, 193, 0.1);
+}
+#wiederkehrende-popup .typ-btn.active[data-typ="investition"] {
+  background-color: #6f42c1;
+  color: white;
+}
+
+
 /* Formular Tabelle */
 #wiederkehrende-popup table {
   width: 100%;
@@ -1915,6 +1979,8 @@ input, textarea, select {
 }
 
 
+
+
 /* =============== Wiederkehrende Zahlungen Popup fertig ====================== */
 
 
@@ -2134,3 +2200,13 @@ input, textarea, select {
   text-align: center;
 }
 /* Monatssteuerelemente Statistik-Tab Ende */
+
+
+/* Übersicht-Tab Start */
+#tab-content > div {
+  display: none;
+}
+
+#tab-content > div.active {
+  display: block;
+}
