@@ -54,8 +54,12 @@ function renderKategorien() {
 
   const gespeicherte = JSON.parse(localStorage.getItem("kategorien")) || {
     einnahme: [],
-    ausgabe: []
+    ausgabe: [],
+    investition: []
   };
+  gespeicherte.einnahme = gespeicherte.einnahme || [];
+gespeicherte.ausgabe = gespeicherte.ausgabe || [];
+gespeicherte.investition = gespeicherte.investition || [];
 
   const typ = typAuswahl.value;
   gespeicherte[typ].forEach((wort, index) => {
@@ -88,8 +92,12 @@ addWordBtn.addEventListener("click", () => {
 
   const gespeicherte = JSON.parse(localStorage.getItem("kategorien")) || {
     einnahme: [],
-    ausgabe: []
+    ausgabe: [],
+    investition: []
   };
+  gespeicherte.einnahme = gespeicherte.einnahme || [];
+gespeicherte.ausgabe = gespeicherte.ausgabe || [];
+gespeicherte.investition = gespeicherte.investition || [];
 
   if (!gespeicherte[typ].includes(wort)) {
     gespeicherte[typ].push(wort);
@@ -227,7 +235,7 @@ function renderSortierGruppen() {
   const eintraege = JSON.parse(localStorage.getItem("eintraege")) || [];
 
   // Kategorien aus localStorage laden (nur zum Ermitteln ungruppierter Kategorien)
-  const gespeicherte = JSON.parse(localStorage.getItem("kategorien")) || { einnahme: [], ausgabe: [] };
+  const gespeicherte = JSON.parse(localStorage.getItem("kategorien")) || { einnahme: [], ausgabe: [], investition: [] };
 
   // Noch nicht gruppierte Kategorien ermitteln
   const bereitsGruppiert = gruppen[aktuelleSortierTyp].flatMap(g => g.items);
@@ -404,6 +412,11 @@ function activateTab(tabName) {
   }
 }
 
+// ------- Automatisch erster Tab auswählen (Kalender) -------
+document.addEventListener("DOMContentLoaded", () => {
+  activateTab("kalender");
+});
+
 // -------------------- EVENTLISTENER REGISTRIEREN --------------------
 Object.keys(tabs).forEach(tabName => {
   tabs[tabName].btn.addEventListener("click", () => activateTab(tabName));
@@ -479,25 +492,35 @@ Object.keys(tabs).forEach(tabName => {
     if (tagDatumStr === heuteStr) tagDiv.classList.add("heute");
     if (tagDatumStr === ausgewaehltesDatum) tagDiv.classList.add("ausgewaehlt");
 
-    // Innerer Aufbau: Datum + flex-container mit Saldo
+    // Datum
     const datumSpan = document.createElement("span");
     datumSpan.className = "datum";
     datumSpan.textContent = tag;
     tagDiv.appendChild(datumSpan);
 
-    // Flex-Container für Saldo zentriert
-    const saldoContainer = document.createElement("div");
-    saldoContainer.className = "saldo-container";
+    // Container für Saldo + Investition
+    const saldoInvestWrapper = document.createElement("div");
+    saldoInvestWrapper.className = "saldo-invest-wrapper";
 
+    // Saldo
     const saldo = berechneSaldoFuerDatum(tagDatumStr);
     if (saldo !== 0) {
-      const saldoSpan = document.createElement("span");
+      const saldoSpan = document.createElement("div");
       saldoSpan.className = "saldo " + (saldo > 0 ? "positiv" : "negativ");
       saldoSpan.textContent = Math.abs(saldo).toFixed(2).replace(".", ",");
-      saldoContainer.appendChild(saldoSpan);
+      saldoInvestWrapper.appendChild(saldoSpan);
     }
 
-    tagDiv.appendChild(saldoContainer);
+    // Investition
+    const investitionsSumme = berechneInvestitionenFuerDatum(tagDatumStr);
+    if (investitionsSumme > 0) {
+      const investitionSpan = document.createElement("div");
+      investitionSpan.className = "investition-anzeige";
+      investitionSpan.textContent = investitionsSumme.toFixed(2).replace(".", ",");
+      saldoInvestWrapper.appendChild(investitionSpan);
+    }
+
+    tagDiv.appendChild(saldoInvestWrapper);
 
     tagDiv.addEventListener("click", () => {
       ausgewaehltesDatum = tagDatumStr;
@@ -522,6 +545,38 @@ Object.keys(tabs).forEach(tabName => {
 
   berechneMonatsuebersicht(jahr, monat);
   zeichneStatistik();
+}
+
+
+// Hilfsfunktion für Investitionen
+function berechneInvestitionenFuerDatum(datumStr) {
+  let summe = 0;
+
+  // Normale Investitionen
+  const eintraege = JSON.parse(localStorage.getItem("eintraege")) || [];
+  eintraege.forEach(eintrag => {
+    if (eintrag.datum === datumStr && eintrag.typ === "investition") {
+      summe += parseFloat(eintrag.betrag);
+    }
+  });
+
+  // Wiederkehrende Investitionen
+  const wiederkehrendeEintraege = JSON.parse(localStorage.getItem("wiederkehrendeEintraege")) || [];
+  const aktuellesDatum = new Date(datumStr);
+  wiederkehrendeEintraege.forEach(wEintrag => {
+    const startDatum = new Date(wEintrag.start);
+    const endDatum = new Date(wEintrag.ende);
+    if (
+      wEintrag.typ === "investition" &&
+      aktuellesDatum >= startDatum &&
+      aktuellesDatum <= endDatum &&
+      istIntervallFuerDatum(wEintrag.intervall, aktuellesDatum)
+    ) {
+      summe += parseFloat(wEintrag.betrag);
+    }
+  });
+
+  return summe;
 }
 
 
@@ -558,36 +613,44 @@ function handleSwipe() {
 // Swipe-Funktionalität für Kalender Ende
 
 
-  // Saldo für Datum (Einnahmen - Ausgaben)
-  function berechneSaldoFuerDatum(datumStr) {
+function berechneSaldoFuerDatum(datumStr) {
   let saldo = 0;
 
   // Normale Einträge laden
   let eintraege = JSON.parse(localStorage.getItem('eintraege')) || [];
   eintraege.forEach(eintrag => {
-    if(eintrag.datum === datumStr) {
-      saldo += (eintrag.typ === 'einnahme' ? 1 : -1) * parseFloat(eintrag.betrag);
+    if (eintrag.datum === datumStr) {
+      if (eintrag.typ === 'einnahme') {
+        saldo += parseFloat(eintrag.betrag);
+      } else if (eintrag.typ === 'ausgabe') {
+        saldo -= parseFloat(eintrag.betrag);
+      }
+      // 'investition' wird ignoriert
     }
   });
 
   // Wiederkehrende Einträge laden
   let wiederkehrendeEintraege = JSON.parse(localStorage.getItem('wiederkehrendeEintraege')) || [];
-  
   const aktuellesDatum = new Date(datumStr);
 
   wiederkehrendeEintraege.forEach(wEintrag => {
     const startDatum = new Date(wEintrag.start);
     const endDatum = new Date(wEintrag.ende);
-    if(aktuellesDatum >= startDatum && aktuellesDatum <= endDatum) {
-      // Prüfe Intervall
+    if (aktuellesDatum >= startDatum && aktuellesDatum <= endDatum) {
       if (istIntervallFuerDatum(wEintrag.intervall, aktuellesDatum)) {
-        saldo += (wEintrag.typ === 'einnahme' ? 1 : -1) * parseFloat(wEintrag.betrag);
+        if (wEintrag.typ === 'einnahme') {
+          saldo += parseFloat(wEintrag.betrag);
+        } else if (wEintrag.typ === 'ausgabe') {
+          saldo -= parseFloat(wEintrag.betrag);
+        }
+        // 'investition' wird ignoriert
       }
     }
   });
 
   return saldo;
 }
+
 
 // Hilfsfunktion für Intervallprüfung
 function istIntervallFuerDatum(intervall, datum) {
@@ -623,7 +686,7 @@ function ladeEintraege() {
   return gespeicherte ? JSON.parse(gespeicherte) : [];
 }
 
-  function renderListe() {
+function renderListe() {
   liste.innerHTML = "";
 
   // Normale Einträge laden und filtern
@@ -641,7 +704,6 @@ function ladeEintraege() {
     const startDatum = new Date(wEintrag.start);
     const endDatum = new Date(wEintrag.ende);
     if (aktuellesDatum >= startDatum && aktuellesDatum <= endDatum) {
-      // Hilfsfunktion aus vorherigem Beispiel (istIntervallFuerDatum)
       return istIntervallFuerDatum(wEintrag.intervall, aktuellesDatum);
     }
     return false;
@@ -655,67 +717,87 @@ function ladeEintraege() {
     return;
   }
 
-  // Normale Einträge rendern (wie bisher)
+  const farben = {
+    einnahme: "green",
+    ausgabe: "red",
+    investition: "#6f42c1"
+  };
+
+  const vorzeichenMap = {
+    einnahme: "+ ",
+    ausgabe: "- ",
+    investition: "• "
+  };
+
+  // Normale Einträge rendern
   gefilterte.forEach((eintrag) => {
-  const li = document.createElement("li");
+    const li = document.createElement("li");
 
-  const inhaltDiv = document.createElement("div");
-  inhaltDiv.className = "eintrag-zeile";
+    const inhaltDiv = document.createElement("div");
+    inhaltDiv.className = "eintrag-zeile";
 
-  const betragSpan = document.createElement("span");
-  betragSpan.className = "betrag";
-  betragSpan.textContent = `${eintrag.typ === "einnahme" ? "+ " : "- "}${parseFloat(eintrag.betrag).toFixed(2).replace(".", ",")} €`;
-  betragSpan.style.color = eintrag.typ === "einnahme" ? "green" : "red";
+    const betragSpan = document.createElement("span");
+    betragSpan.className = "betrag";
 
-  const kategorieSpan = document.createElement("span");
-  kategorieSpan.className = "kategorie";
-  kategorieSpan.textContent = eintrag.kategorie;
-  kategorieSpan.style.color = betragSpan.style.color; // gleiche Farbe übernehmen
+    const vorzeichen = vorzeichenMap[eintrag.typ] || "";
+    const betragFormatted = `${parseFloat(eintrag.betrag).toFixed(2).replace(".", ",")} €`;
+    betragSpan.textContent = `${vorzeichen}${betragFormatted}`;
+    betragSpan.style.color = farben[eintrag.typ] || "black";
 
-  inhaltDiv.appendChild(betragSpan);
-  inhaltDiv.appendChild(kategorieSpan);
+    const kategorieSpan = document.createElement("span");
+    kategorieSpan.className = "kategorie";
+    kategorieSpan.textContent = eintrag.kategorie;
+    kategorieSpan.style.color = betragSpan.style.color;
 
-  const loeschBtn = document.createElement("button");
-  loeschBtn.textContent = "X";
-  loeschBtn.title = "Eintrag löschen";
+    inhaltDiv.appendChild(betragSpan);
+    inhaltDiv.appendChild(kategorieSpan);
 
-  loeschBtn.addEventListener("click", () => {
-    if (confirm("Möchten Sie diesen Eintrag wirklich löschen?")) {
-      const alleEintraege = ladeEintraege();
-      const indexOriginal = alleEintraege.findIndex(e =>
-        e.typ === eintrag.typ &&
-        e.betrag === eintrag.betrag &&
-        e.kategorie === eintrag.kategorie &&
-        e.datum === eintrag.datum
-      );
+    const loeschBtn = document.createElement("button");
+    loeschBtn.textContent = "X";
+    loeschBtn.title = "Eintrag löschen";
 
-      if (indexOriginal !== -1) {
-        alleEintraege.splice(indexOriginal, 1);
-        localStorage.setItem('eintraege', JSON.stringify(alleEintraege));
-        berechneMonatsuebersicht(aktuellesDatum.getFullYear(), aktuellesDatum.getMonth());
-        renderKalender();
-        renderListe();
-        zeichneStatistik();
+    loeschBtn.addEventListener("click", () => {
+      if (confirm("Möchten Sie diesen Eintrag wirklich löschen?")) {
+        const alleEintraege = ladeEintraege();
+        const indexOriginal = alleEintraege.findIndex(e =>
+          e.typ === eintrag.typ &&
+          e.betrag === eintrag.betrag &&
+          e.kategorie === eintrag.kategorie &&
+          e.datum === eintrag.datum
+        );
+
+        if (indexOriginal !== -1) {
+          alleEintraege.splice(indexOriginal, 1);
+          localStorage.setItem('eintraege', JSON.stringify(alleEintraege));
+          berechneMonatsuebersicht(aktuellesDatum.getFullYear(), aktuellesDatum.getMonth());
+          renderKalender();
+          renderListe();
+          zeichneStatistik();
+        }
       }
-    }
+    });
+
+    li.appendChild(inhaltDiv);
+    li.appendChild(loeschBtn);
+    liste.appendChild(li);
   });
 
-  li.appendChild(inhaltDiv);
-  li.appendChild(loeschBtn);
-  liste.appendChild(li);
-});
 
 
   // Wiederkehrende Einträge rendern (ohne Löschen-Button, da diese anders verwaltet werden)
   // Wiederkehrende Einträge rendern (ohne Löschen-Button)
+// Wiederkehrende Einträge rendern (ohne Löschen-Button)
+
+
 gefilterteWiederkehrende.forEach((eintrag) => {
   const li = document.createElement("li");
 
-  const farbe = eintrag.typ === "einnahme" ? "green" : "red";
+  const farbe = farben[eintrag.typ] || "black";
+  const vorzeichen = vorzeichenMap[eintrag.typ] || "";
 
   // Betrag
   const betragSpan = document.createElement("span");
-  betragSpan.textContent = `${eintrag.typ === "einnahme" ? "+ " : "- "}${parseFloat(eintrag.betrag).toFixed(2).replace(".", ",")} €`;
+  betragSpan.textContent = `${vorzeichen}${parseFloat(eintrag.betrag).toFixed(2).replace(".", ",")} €`;
   betragSpan.className = "betrag";
   betragSpan.style.color = farbe;
 
@@ -728,13 +810,14 @@ gefilterteWiederkehrende.forEach((eintrag) => {
   // Container
   const zeile = document.createElement("div");
   zeile.className = "eintrag-zeile";
-
   zeile.appendChild(betragSpan);
   zeile.appendChild(kategorieSpan);
 
   li.appendChild(zeile);
   liste.appendChild(li);
 });
+
+
 
 }
 
@@ -826,17 +909,16 @@ zeichneStatistik();
   zeichneStatistik();
 
   // Plus-Button & Popup
+
 const plusButton = document.getElementById("plus-button");
 const popupOverlay = document.getElementById("popup-overlay");
 const popupClose = document.getElementById("popup-close");
 
-plusButton.addEventListener("click", () => {
-  popupDatum.value = ausgewaehltesDatum;
-  popupOverlay.style.display = "flex";
 
-  // Standardmäßig "Ausgabe" auswählen
-  typButtons[1].click(); // Simuliert echten Klick → triggert komplette Logik inkl. Kategorie-Update
 
+// Popup schließen
+popupClose.addEventListener("click", () => {
+  popupOverlay.style.display = "none";
 });
 
 
@@ -896,7 +978,7 @@ popupOverlay.addEventListener("click", (e) => {
     popupOverlay.style.display = "none";
   }
 });
-// --- fertig Popup ---
+// --- fertig Plus-Button Popup ---
 // --- fertig Popup ---
 
 
@@ -1065,20 +1147,25 @@ if (openBudgetBtn) {
     budgetInput.value = savedBudget || '';
     budgetOverlay.classList.remove('hidden');
 
-    // === Übersicht im Popup berechnen ===
     const heute = new Date();
     const jahr = heute.getFullYear();
     const monat = heute.getMonth();
 
     const wiederkehrendeEintraege = JSON.parse(localStorage.getItem("wiederkehrendeEintraege")) || [];
+    const zusatzEinnahmenList = JSON.parse(localStorage.getItem("zusatzEinnahmen")) || [];
+
     let wkEinnahmen = 0;
     let wkAusgaben = 0;
+    let zusatzEinnahmen = 0;
+    let investitionen = 0;
 
     const tageImMonat = new Date(jahr, monat + 1, 0).getDate();
 
     for (let tag = 1; tag <= tageImMonat; tag++) {
       const datum = new Date(jahr, monat, tag);
+      const tagDatumStr = datum.toISOString().slice(0, 10); // z.B. "2025-07-30"
 
+      // Wiederkehrende Einträge prüfen
       wiederkehrendeEintraege.forEach(wEintrag => {
         const startDatum = new Date(wEintrag.start);
         const endDatum = new Date(wEintrag.ende);
@@ -1094,16 +1181,38 @@ if (openBudgetBtn) {
           }
         }
       });
+
+      // Investitionen für den Tag berechnen und aufsummieren
+      investitionen += berechneInvestitionenFuerDatum(tagDatumStr);
     }
 
-    const vorgeschlagen = wkEinnahmen - wkAusgaben;
+    // Zusätzliche Einnahmen für den aktuellen Monat summieren
+    // Zusätzliche Einnahmen (nicht wiederkehrend) für jeden Tag aufsummieren
+const eintraege = JSON.parse(localStorage.getItem('eintraege')) || [];
+for (let tag = 1; tag <= tageImMonat; tag++) {
+  const datum = new Date(jahr, monat, tag);
+  const tagDatumStr = datum.toISOString().slice(0, 10);
+
+  eintraege.forEach(eintrag => {
+    if (eintrag.datum === tagDatumStr && eintrag.typ === 'einnahme') {
+      zusatzEinnahmen += parseFloat(eintrag.betrag);
+    }
+  });
+}
+
+
+    const vorgeschlagen = (wkEinnahmen + zusatzEinnahmen) - (wkAusgaben + investitionen);
 
     // DOM aktualisieren
     document.getElementById("wk-ausgaben").textContent = wkAusgaben.toFixed(2) + " €";
     document.getElementById("wk-einnahmen").textContent = wkEinnahmen.toFixed(2) + " €";
+    document.getElementById("zusatz-einnahmen").textContent = zusatzEinnahmen.toFixed(2) + " €";
+    document.getElementById("investition").textContent = investitionen.toFixed(2) + " €";
     document.getElementById("vorgeschlagenes-budget").textContent = vorgeschlagen.toFixed(2) + " €";
   });
 }
+
+
 
 
 // Schließt das Budget-Popup
@@ -1263,7 +1372,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const gespeicherte = JSON.parse(localStorage.getItem("kategorien")) || {
     einnahme: [],
-    ausgabe: []
+    ausgabe: [],
+    investition: []
   };
 
   const kategorieListe = gespeicherte[typ] || [];
@@ -1406,82 +1516,90 @@ function renderEintraege() {
   liste.innerHTML = "";
 
   eintraege.forEach((eintrag, index) => {
-    const li = document.createElement("li");
-    li.style.backgroundColor = eintrag.typ === "einnahme" ? "#d4f7d4" : "#f7d4d4";
-    li.style.borderRadius = "6px";
-    li.style.marginBottom = "8px";
-    li.style.padding = "10px 15px";
-    li.style.display = "flex";
-    li.style.justifyContent = "space-between";
-    li.style.alignItems = "center";
+  const li = document.createElement("li");
 
-    // Linke Seite: Text in Grid mit 2 Spalten
-    const container = document.createElement("div");
-    container.style.display = "grid";
-    container.style.gridTemplateColumns = "120px auto";
-    container.style.rowGap = "6px";
-    container.style.columnGap = "12px";
+  // Farbzuweisung nach Typ
+  if (eintrag.typ === "einnahme") {
+    li.style.backgroundColor = "#d4f7d4"; // grün
+  } else if (eintrag.typ === "ausgabe") {
+    li.style.backgroundColor = "#f7d4d4"; // rot
+  } else if (eintrag.typ === "investition") {
+    li.style.backgroundColor = "#e6d4f7"; // lila
+  }
 
-    function addRow(label, wert) {
-      const labelDiv = document.createElement("div");
-      labelDiv.textContent = label;
-      labelDiv.style.fontWeight = "bold";
-      labelDiv.style.textAlign = "left";
+  li.style.borderRadius = "6px";
+  li.style.marginBottom = "8px";
+  li.style.padding = "10px 15px";
+  li.style.display = "flex";
+  li.style.justifyContent = "space-between";
+  li.style.alignItems = "center";
 
-      const wertDiv = document.createElement("div");
-      wertDiv.textContent = wert;
-      wertDiv.style.textAlign = "left";
+  // Linke Seite: Text in Grid mit 2 Spalten
+  const container = document.createElement("div");
+  container.style.display = "grid";
+  container.style.gridTemplateColumns = "120px auto";
+  container.style.rowGap = "6px";
+  container.style.columnGap = "12px";
 
-      container.appendChild(labelDiv);
-      container.appendChild(wertDiv);
-    }
+  function addRow(label, wert) {
+    const labelDiv = document.createElement("div");
+    labelDiv.textContent = label;
+    labelDiv.style.fontWeight = "bold";
+    labelDiv.style.textAlign = "left";
 
-    addRow("Kategorie:", eintrag.kategorie);
-    addRow("Betrag:", parseFloat(eintrag.betrag).toFixed(2).replace(".", ",") + " €");
+    const wertDiv = document.createElement("div");
+    wertDiv.textContent = wert;
+    wertDiv.style.textAlign = "left";
 
-    addRow("Intervall:", eintrag.intervall);
-    addRow("Zeitraum:", `${eintrag.start} bis ${eintrag.ende}`);
+    container.appendChild(labelDiv);
+    container.appendChild(wertDiv);
+  }
 
-    // Rechte Seite: Buttons in vertikalem Flex-Container
-    const buttonsDiv = document.createElement("div");
-    buttonsDiv.style.display = "flex";
-    buttonsDiv.style.flexDirection = "column";
-    buttonsDiv.style.gap = "6px";
+  addRow("Kategorie:", eintrag.kategorie);
+  addRow("Betrag:", parseFloat(eintrag.betrag).toFixed(2).replace(".", ",") + " €");
+  addRow("Intervall:", eintrag.intervall);
+  addRow("Zeitraum:", `${eintrag.start} bis ${eintrag.ende}`);
 
-    const editBtn = document.createElement("button");
-editBtn.textContent = "✏️";
-editBtn.title = "Bearbeiten";
-editBtn.style.width = "32px";
-editBtn.style.height = "32px";
-editBtn.style.cursor = "pointer";
-editBtn.style.marginRight = "7px";  // Abstand rechts
-editBtn.addEventListener("click", () => {
-  ladeEintragZurBearbeitung(index);
-  document.getElementById("eintraege-popup-overlay").classList.add("hidden");
-});
+  // Rechte Seite: Buttons
+  const buttonsDiv = document.createElement("div");
+  buttonsDiv.style.display = "flex";
+  buttonsDiv.style.flexDirection = "column";
+  buttonsDiv.style.gap = "6px";
 
-const deleteBtn = document.createElement("button");
-deleteBtn.textContent = "🗑️";
-deleteBtn.title = "Löschen";
-deleteBtn.style.width = "32px";
-deleteBtn.style.height = "32px";
-deleteBtn.style.cursor = "pointer";
-deleteBtn.style.marginRight = "7px";  // Abstand rechts
-deleteBtn.addEventListener("click", () => {
-  eintraege.splice(index, 1);
-  speichereEintraege();
-  renderEintraege();
-});
-
-
-    buttonsDiv.appendChild(editBtn);
-    buttonsDiv.appendChild(deleteBtn);
-
-    li.appendChild(container);
-    li.appendChild(buttonsDiv);
-
-    liste.appendChild(li);
+  const editBtn = document.createElement("button");
+  editBtn.textContent = "✏️";
+  editBtn.title = "Bearbeiten";
+  editBtn.style.width = "32px";
+  editBtn.style.height = "32px";
+  editBtn.style.cursor = "pointer";
+  editBtn.style.marginRight = "7px";
+  editBtn.addEventListener("click", () => {
+    ladeEintragZurBearbeitung(index);
+    document.getElementById("eintraege-popup-overlay").classList.add("hidden");
   });
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.textContent = "🗑️";
+  deleteBtn.title = "Löschen";
+  deleteBtn.style.width = "32px";
+  deleteBtn.style.height = "32px";
+  deleteBtn.style.cursor = "pointer";
+  deleteBtn.style.marginRight = "7px";
+  deleteBtn.addEventListener("click", () => {
+    eintraege.splice(index, 1);
+    speichereEintraege();
+    renderEintraege();
+  });
+
+  buttonsDiv.appendChild(editBtn);
+  buttonsDiv.appendChild(deleteBtn);
+
+  li.appendChild(container);
+  li.appendChild(buttonsDiv);
+
+  liste.appendChild(li);
+});
+
 }
 
 
@@ -1557,6 +1675,11 @@ deleteBtn.addEventListener("click", () => {
 
 
 // ========================= Wiederkehrende Zahlungen Popup Ende =========================
+
+
+
+
+
 
 // ========================= Statistik-Tab Start =========================
 
@@ -2098,3 +2221,9 @@ function berechneGruppenSummen(einzeleintraege, wiederkehrendeEintraege) {
   return summen;
 }
 
+
+
+// ========================= Statistik-Tab Ende =========================
+
+// ========================= Übersicht-Tab Start =========================
+// ========================= Übersicht-Tab Start =========================
