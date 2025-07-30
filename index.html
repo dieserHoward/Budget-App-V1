@@ -15,6 +15,7 @@
 
 
 <!---========================= HIER HTML ===========================-->
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -35,9 +36,9 @@
       <h2>Einstellungen</h2>
       <!-- <p>Hier kannst du deine Einstellungen anpassen.</p> -->
       <button id="open-kategorie-popup" style="margin-top: 20px;">Kategorien verwalten</button>
-      <button id="open-budget-popup" style="margin-top: 20px;">Budget verwalten</button>
-      <button id="open-wiederkehrende-popup" style="margin-top: 20px;">Wiederkehrende Zahlungen</button>
       <button id="open-kategorie-sortieren-popup" style="margin-top: 20px;">Kategorien sortieren</button>
+      <button id="open-wiederkehrende-popup" style="margin-top: 20px;">Wiederkehrende Zahlungen</button>
+      <button id="open-budget-popup" style="margin-top: 20px;">Budget verwalten</button>
     </div>
 
   <!-- ================= POPUP: Kategorien-Verwaltung ================= -->
@@ -54,6 +55,7 @@
     <select id="typ-auswahl">
       <option value="einnahme">Einzahlung</option>
       <option value="ausgabe">Auszahlung</option>
+      <option value="investition">Investition</option>
     </select>
 
     <input type="text" id="wordInput" placeholder="Wort eingeben" />
@@ -87,8 +89,11 @@
 
     <!-- Budget-Übersicht -->
     <div id="budget-uebersicht" class="budget-uebersicht">
-      <p><span>Feste Ausgaben:</span> <span class="betrag" id="wk-ausgaben">– €</span></p>
+      
       <p><span>Feste Einnahmen:</span> <span class="betrag" id="wk-einnahmen">– €</span></p>
+      <p><span>Zusätzliche Einnahmen:</span> <span class="betrag" id="zusatz-einnahmen">– €</span></p>
+      <p><span>Feste Ausgaben:</span> <span class="betrag" id="wk-ausgaben">– €</span></p>
+      <p><span>Investitionen:</span> <span class="betrag" id="investition">– €</span></p>
       <p><span>Vorgeschlagenes Budget:</span> <span class="betrag" id="vorgeschlagenes-budget">– €</span></p>
     </div>
 
@@ -106,6 +111,7 @@
     <!-- Buttons für Typ -->
     <div id="typ-buttons">
       <button type="button" class="typ-btn" data-typ="einnahme">Einzahlung</button>
+      <button type="button" class="typ-btn" data-typ="investition">Invest</button>
       <button type="button" class="typ-btn" data-typ="ausgabe">Auszahlung</button>
     </div>
 
@@ -281,6 +287,12 @@
 
 
 <!-- ================= POPUP: Kategorien sortieren Ende ================= -->
+
+
+
+
+
+
 
   </div>
 
@@ -502,7 +514,57 @@ items.forEach(item => {
     </div>
   </div>
 
+  
 <!-- ======================================= Statistik-Tab Ende ======================================= -->
+
+<!-- ======================================= Übersicht-Tab Start ======================================= -->
+
+<div id="tab-content" style="margin-top: 100px;">
+    <!-- ========== Kalender-Tab ========== -->
+    <!-- Kalender Tab -->
+    <div id="tab-content-uebersicht" class="active">
+      
+
+<h2>Übersicht</h2>
+
+
+
+  <!-- Zeitraum Auswahl -->
+  <div id="uebersicht-zeitraum-auswahl-buttons">
+    <button data-modus="woche" class="uebersicht-zeitraum-button">Woche</button>
+    <button data-modus="monat" class="uebersicht-zeitraum-button active">Monat</button>
+    <button data-modus="jahr" class="uebersicht-zeitraum-button">Jahr</button>
+  </div>
+
+  <!-- Zeitraum Navigation -->
+  <div id="uebersicht-zeitraum-navigation">
+    <button id="uebersicht-zeitraum-zurueck" class="nav-button">&#x25C0;</button>
+    <span id="uebersicht-zeitraum-anzeige">Juli 2025</span>
+    <button id="uebersicht-zeitraum-vor" class="nav-button">&#x25B6;</button>
+  </div>
+
+  <!-- Slider Ein- Ausgaben -->
+  <div class="container">
+    <div class="nav" id="uebersicht-nav">
+      <div data-pos="0">Einnahmen</div>
+      <div data-pos="1">Budget</div>
+      <div data-pos="2">Ausgaben</div>
+      <div class="underline"></div>
+    </div>
+  </div>
+
+  <!-- Charts oder Daten-Anzeigen (mit IDs wie unten erwartet) -->
+  <div id="uebersicht-chart-einnahmen">...</div>
+  <div id="uebersicht-chart-budget" style="display:none">...</div>
+  <div id="uebersicht-chart-ausgaben" style="display:none">...</div>
+</div>
+
+
+
+</div>
+<!-- ======================================= Übersicht-Tab Ende ======================================= -->
+
+
 
   <!-- ================= PLUS-BUTTON & Formular für Eintrag ================= -->
 <!-- ================= PLUS-BUTTON & Formular für Eintrag ================= -->
@@ -517,6 +579,7 @@ items.forEach(item => {
       <!-- Buttons für Typ -->
       <div id="typ-buttons">
         <button type="button" class="typ-btn" data-typ="einnahme">Einzahlung</button>
+        <button type="button" class="typ-btn" data-typ="investition">Invest</button>
         <button type="button" class="typ-btn" data-typ="ausgabe">Auszahlung</button>
       </div>
 
@@ -607,22 +670,34 @@ items.forEach(item => {
 <!-- JavaScript -->
  <!-- Plus-Button Popup Logik -->
 <script>
-document.getElementById('plus-button').addEventListener('click', () => {
-  document.getElementById('popup-overlay').style.display = 'flex';
+function waehleTyp(typ) {
+  const alleTypBtns = document.querySelectorAll(".typ-btn");
+  const popupTyp = document.getElementById("popup-typ");
 
-  // Standard-Typ setzen (z.B. "einnahme")
-  const defaultTyp = 'einnahme';
-  document.getElementById('popup-typ').value = defaultTyp;
-
-  // Aktive Klasse setzen (optional für CSS-Styling)
-  document.querySelectorAll('.typ-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.typ === defaultTyp);
+  alleTypBtns.forEach(btn => {
+    if (btn.dataset.typ === typ) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
   });
 
-  // Kategorien-Dropdown sofort aktualisieren
-  updateSelect();
+  popupTyp.value = typ;
+}
+
+document.getElementById("plus-button").addEventListener("click", () => {
+  const popupOverlay = document.getElementById("popup-overlay");
+  const popupDatum = document.getElementById("popup-datum");
+
+  popupOverlay.style.display = "flex";
+  popupDatum.value = ausgewaehltesDatum;
+
+  waehleTyp("ausgabe");  // Standardmäßig "Ausgabe" aktivieren
+  updateSelect();        // Falls du diese Funktion brauchst
 });
 </script>
+
+
 <!-- Plus-Button Popup Logik Ende -->
 
 <script>
@@ -632,9 +707,16 @@ document.getElementById('plus-button').addEventListener('click', () => {
 <script>
 document.querySelectorAll('.typ-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    const typ = btn.getAttribute('data-typ');
-    document.getElementById('popup-typ').value = typ;
-    updateSelect(); // ✅ aktualisiert sofort die Kategorienliste
+    const selectedTyp = btn.dataset.typ;
+    document.getElementById('popup-typ').value = selectedTyp;
+
+    // Aktive Klasse setzen
+    document.querySelectorAll('.typ-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.typ === selectedTyp);
+    });
+
+    // Kategorien neu laden, falls relevant
+    updateSelect();
   });
 });
 
@@ -794,6 +876,7 @@ if (gespeicherteKategorien) {
   <select id="typ-auswahl">
     <option value="einnahme">Einzahlung</option>
     <option value="ausgabe">Auszahlung</option>
+    <option value="investition">Investition</option>
   </select>
 
   <input type="text" id="neue-kategorie" placeholder="Neue Kategorie..." />
@@ -862,7 +945,6 @@ if (gespeicherteKategorien) {
 
 </body>
 </html>
-
 
 
 <!---========================= HIER HTML Ende aber ohne Schluss===========================-->
