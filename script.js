@@ -1162,29 +1162,32 @@ if (openBudgetBtn) {
     const tageImMonat = new Date(jahr, monat + 1, 0).getDate();
 
     for (let tag = 1; tag <= tageImMonat; tag++) {
-      const datum = new Date(jahr, monat, tag);
-      const tagDatumStr = datum.toISOString().slice(0, 10); // z.B. "2025-07-30"
+  const datum = new Date(jahr, monat, tag);
+  const tagDatumStr = datum.toISOString().slice(0, 10);
 
-      // Wiederkehrende Einträge prüfen
-      wiederkehrendeEintraege.forEach(wEintrag => {
-        const startDatum = new Date(wEintrag.start);
-        const endDatum = new Date(wEintrag.ende);
+  // Wiederkehrende Einträge prüfen (auch Investitionen jetzt!)
+  wiederkehrendeEintraege.forEach(wEintrag => {
+    const startDatum = new Date(wEintrag.start);
+    const endDatum = new Date(wEintrag.ende);
 
-        if (datum >= startDatum && datum <= endDatum) {
-          if (istIntervallFuerDatum(wEintrag.intervall, datum)) {
-            const betrag = parseFloat(wEintrag.betrag);
-            if (wEintrag.typ === "einnahme") {
-              wkEinnahmen += betrag;
-            } else if (wEintrag.typ === "ausgabe") {
-              wkAusgaben += betrag;
-            }
-          }
+    if (datum >= startDatum && datum <= endDatum) {
+      if (istIntervallFuerDatum(wEintrag.intervall, datum)) {
+        const betrag = parseFloat(wEintrag.betrag);
+        if (wEintrag.typ === "einnahme") {
+          wkEinnahmen += betrag;
+        } else if (wEintrag.typ === "ausgabe") {
+          wkAusgaben += betrag;
+        } else if (wEintrag.typ === "investition") {
+          investitionen += betrag; // 👈 NEU: wiederkehrende Investition
         }
-      });
-
-      // Investitionen für den Tag berechnen und aufsummieren
-      investitionen += berechneInvestitionenFuerDatum(tagDatumStr);
+      }
     }
+  });
+
+  // Einmalige Investitionen summieren
+  investitionen += berechneInvestitionenFuerDatum(tagDatumStr);
+}
+
 
     // Zusätzliche Einnahmen für den aktuellen Monat summieren
     // Zusätzliche Einnahmen (nicht wiederkehrend) für jeden Tag aufsummieren
