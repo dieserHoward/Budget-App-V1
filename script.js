@@ -1033,7 +1033,6 @@ function berechneMonatsuebersicht(jahr, monat) {
   let ausgabenGesamt = 0;
   let ausgabenNurNormal = 0;
 
-  // Normale Einträge laden
   const eintraege = JSON.parse(localStorage.getItem("eintraege")) || [];
 
   eintraege.forEach(eintrag => {
@@ -1048,7 +1047,6 @@ function berechneMonatsuebersicht(jahr, monat) {
     }
   });
 
-  // Wiederkehrende Einträge laden
   const wiederkehrendeEintraege = JSON.parse(localStorage.getItem("wiederkehrendeEintraege")) || [];
   const tageImMonat = new Date(jahr, monat + 1, 0).getDate();
 
@@ -1073,19 +1071,17 @@ function berechneMonatsuebersicht(jahr, monat) {
     });
   }
 
-  // Budget aus localStorage holen
-  const userBudgetText = localStorage.getItem('userBudget');
+  // Monatsspezifisches Budget aus localStorage holen
+  const budgetKey = `budget-${jahr}-${monat + 1}`;
+  const userBudgetText = localStorage.getItem(budgetKey);
   const userBudget = parseFloat(userBudgetText) || 0;
 
-  // Budgetberechnung (nur normale Ausgaben)
   const monatlichesBudget = userBudget - ausgabenNurNormal;
 
-  // DOM aktualisieren
   document.getElementById("monat-einnahmen").textContent = einnahmenGesamt.toFixed(2) + " €";
   document.getElementById("monat-ausgaben").textContent = ausgabenGesamt.toFixed(2) + " €";
   document.getElementById("monat-budget").textContent = monatlichesBudget.toFixed(2) + " €";
 
-  // Optional: Saldo (Einnahmen - Ausgaben, inkl. wiederkehrend)
   const saldoElement = document.getElementById("monat-saldo");
   if (saldoElement) {
     const saldo = einnahmenGesamt - ausgabenGesamt;
@@ -1094,7 +1090,7 @@ function berechneMonatsuebersicht(jahr, monat) {
     saldoElement.classList.add(saldo >= 0 ? "positiv" : "negativ");
   }
 
-  // Budget-Slider aktualisieren (auf Basis von ausgabenNurNormal)
+  // Budget-Slider
   const heute = new Date();
   const aktuellerMonat = heute.getMonth();
   const aktuellesJahr = heute.getFullYear();
@@ -1129,10 +1125,17 @@ function berechneMonatsuebersicht(jahr, monat) {
 
 
 
-// Budget-Verwaltungs Popup Start
-// === Budget Popup Logik ===
+// === Budget-Verwaltungs Popup Start ===
 
-// Elemente selektieren
+// == Monatsnavigation und Budgetanzeige ==
+let aktuellesJahr = new Date().getFullYear();
+let aktuellerMonat = new Date().getMonth(); // 0-basiert (0 = Januar)
+
+const monatAnzeige = document.getElementById('monat-anzeige');
+const prevMonthBtn = document.getElementById('prev-month');
+const nextMonthBtn = document.getElementById('next-month');
+
+// DOM-Elemente
 const budgetOverlay = document.getElementById('budget-popup-overlay');
 const openBudgetBtn = document.getElementById('open-budget-popup');
 const closeBudgetBtn = document.getElementById('budget-close');
@@ -1140,126 +1143,148 @@ const saveBudgetBtn = document.getElementById('save-budget');
 const clearBudgetBtn = document.getElementById('clear-budget');
 const budgetInput = document.getElementById('budget-input');
 
-// Öffnet das Budget-Popup
-if (openBudgetBtn) {
-  openBudgetBtn.addEventListener('click', () => {
-    const savedBudget = localStorage.getItem('userBudget');
-    budgetInput.value = savedBudget || '';
-    budgetOverlay.classList.remove('hidden');
+// Hilfsfunktionen
+function formatMonat(jahr, monat) {
+  return new Date(jahr, monat).toLocaleDateString("de-DE", { month: "long", year: "numeric" });
+}
 
-    const heute = new Date();
-    const jahr = heute.getFullYear();
-    const monat = heute.getMonth();
+function getBudgetKey(jahr, monat) {
+  return `budget-${jahr}-${monat + 1}`;
+}
 
-    const wiederkehrendeEintraege = JSON.parse(localStorage.getItem("wiederkehrendeEintraege")) || [];
-    const zusatzEinnahmenList = JSON.parse(localStorage.getItem("zusatzEinnahmen")) || [];
+// Budget und Monatsdaten laden
+function ladeBudgetUndWerte(jahr, monat) {
+  const budgetKey = getBudgetKey(jahr, monat);
+  const gespeichertesBudget = localStorage.getItem(budgetKey);
+  budgetInput.value = gespeichertesBudget || '';
+  monatAnzeige.textContent = formatMonat(jahr, monat);
 
-    let wkEinnahmen = 0;
-    let wkAusgaben = 0;
-    let zusatzEinnahmen = 0;
-    let investitionen = 0;
+  const wiederkehrendeEintraege = JSON.parse(localStorage.getItem("wiederkehrendeEintraege")) || [];
+  const eintraege = JSON.parse(localStorage.getItem("eintraege")) || [];
 
-    const tageImMonat = new Date(jahr, monat + 1, 0).getDate();
+  let wkEinnahmen = 0;
+  let wkAusgaben = 0;
+  let wkInvestitionen = 0;
+  let zusatzEinnahmen = 0;
+  let manuelleInvestitionen = 0;
 
-    for (let tag = 1; tag <= tageImMonat; tag++) {
-  const datum = new Date(jahr, monat, tag);
-  const tagDatumStr = datum.toISOString().slice(0, 10);
+  const tageImMonat = new Date(jahr, monat + 1, 0).getDate();
 
-  // Wiederkehrende Einträge prüfen (auch Investitionen jetzt!)
-  wiederkehrendeEintraege.forEach(wEintrag => {
-    const startDatum = new Date(wEintrag.start);
-    const endDatum = new Date(wEintrag.ende);
-
-    if (datum >= startDatum && datum <= endDatum) {
-      if (istIntervallFuerDatum(wEintrag.intervall, datum)) {
+  // Wiederkehrende Einträge durchlaufen
+  for (let tag = 1; tag <= tageImMonat; tag++) {
+    const datum = new Date(jahr, monat, tag);
+    wiederkehrendeEintraege.forEach(wEintrag => {
+      const startDatum = new Date(wEintrag.start);
+      const endDatum = new Date(wEintrag.ende);
+      if (datum >= startDatum && datum <= endDatum && istIntervallFuerDatum(wEintrag.intervall, datum)) {
         const betrag = parseFloat(wEintrag.betrag);
         if (wEintrag.typ === "einnahme") {
           wkEinnahmen += betrag;
         } else if (wEintrag.typ === "ausgabe") {
           wkAusgaben += betrag;
         } else if (wEintrag.typ === "investition") {
-          investitionen += betrag; // 👈 NEU: wiederkehrende Investition
+          wkInvestitionen += betrag;
         }
+      }
+    });
+  }
+
+  // Manuelle Einträge durchlaufen
+  eintraege.forEach(eintrag => {
+    const eintragsDatum = new Date(eintrag.datum);
+    if (eintragsDatum.getFullYear() === jahr && eintragsDatum.getMonth() === monat) {
+      const betrag = parseFloat(eintrag.betrag);
+      if (eintrag.typ === 'einnahme') {
+        zusatzEinnahmen += betrag;
+      } else if (eintrag.typ === 'investition') {
+        manuelleInvestitionen += betrag;
       }
     }
   });
 
-  // Einmalige Investitionen summieren
-  investitionen += berechneInvestitionenFuerDatum(tagDatumStr);
+  const investitionen = wkInvestitionen + manuelleInvestitionen;
+  const vorgeschlagen = (wkEinnahmen + zusatzEinnahmen) - (wkAusgaben + investitionen);
+
+  // Werte im DOM anzeigen
+  document.getElementById("wk-ausgaben").textContent = wkAusgaben.toFixed(2) + " €";
+  document.getElementById("wk-einnahmen").textContent = wkEinnahmen.toFixed(2) + " €";
+  document.getElementById("zusatz-einnahmen").textContent = zusatzEinnahmen.toFixed(2) + " €";
+  document.getElementById("investition").textContent = investitionen.toFixed(2) + " €";
+  document.getElementById("vorgeschlagenes-budget").textContent = vorgeschlagen.toFixed(2) + " €";
 }
 
+// Monat vor/zurück wechseln
+prevMonthBtn.addEventListener('click', () => {
+  aktuellerMonat--;
+  if (aktuellerMonat < 0) {
+    aktuellerMonat = 11;
+    aktuellesJahr--;
+  }
+  ladeBudgetUndWerte(aktuellesJahr, aktuellerMonat);
+});
 
-    // Zusätzliche Einnahmen für den aktuellen Monat summieren
-    // Zusätzliche Einnahmen (nicht wiederkehrend) für jeden Tag aufsummieren
-const eintraege = JSON.parse(localStorage.getItem('eintraege')) || [];
-for (let tag = 1; tag <= tageImMonat; tag++) {
-  const datum = new Date(jahr, monat, tag);
-  const tagDatumStr = datum.toISOString().slice(0, 10);
+nextMonthBtn.addEventListener('click', () => {
+  aktuellerMonat++;
+  if (aktuellerMonat > 11) {
+    aktuellerMonat = 0;
+    aktuellesJahr++;
+  }
+  ladeBudgetUndWerte(aktuellesJahr, aktuellerMonat);
+});
 
-  eintraege.forEach(eintrag => {
-    if (eintrag.datum === tagDatumStr && eintrag.typ === 'einnahme') {
-      zusatzEinnahmen += parseFloat(eintrag.betrag);
-    }
+// === Popup-Handling ===
+
+// Öffnet das Budget-Popup
+if (openBudgetBtn) {
+  openBudgetBtn.addEventListener('click', () => {
+    const heute = new Date();
+    aktuellesJahr = heute.getFullYear();
+    aktuellerMonat = heute.getMonth();
+    ladeBudgetUndWerte(aktuellesJahr, aktuellerMonat);
+    budgetOverlay.classList.remove('hidden');
   });
 }
 
-
-    const vorgeschlagen = (wkEinnahmen + zusatzEinnahmen) - (wkAusgaben + investitionen);
-
-    // DOM aktualisieren
-    document.getElementById("wk-ausgaben").textContent = wkAusgaben.toFixed(2) + " €";
-    document.getElementById("wk-einnahmen").textContent = wkEinnahmen.toFixed(2) + " €";
-    document.getElementById("zusatz-einnahmen").textContent = zusatzEinnahmen.toFixed(2) + " €";
-    document.getElementById("investition").textContent = investitionen.toFixed(2) + " €";
-    document.getElementById("vorgeschlagenes-budget").textContent = vorgeschlagen.toFixed(2) + " €";
-  });
-}
-
-
-
-
-// Schließt das Budget-Popup
+// Popup schließen
 if (closeBudgetBtn) {
   closeBudgetBtn.addEventListener('click', () => {
     budgetOverlay.classList.add('hidden');
   });
 }
-// Schließt das Popup, wenn man außerhalb des Inhalts klickt
+
+// Popup durch Klick außerhalb schließen
 budgetOverlay.addEventListener('click', (e) => {
   if (e.target === budgetOverlay) {
     budgetOverlay.classList.add('hidden');
   }
 });
 
-
 // Budget speichern
 saveBudgetBtn.addEventListener('click', () => {
   const value = budgetInput.value.trim();
   if (value && !isNaN(value) && Number(value) > 0) {
-    localStorage.setItem('userBudget', value);
-    alert(`Budget gespeichert: ${value} €`);
+    const key = getBudgetKey(aktuellesJahr, aktuellerMonat);
+    localStorage.setItem(key, value);
+    alert(`Budget für ${formatMonat(aktuellesJahr, aktuellerMonat)} gespeichert: ${value} €`);
     budgetOverlay.classList.add('hidden');
-
-    // HIER: Monatsübersicht aktualisieren
-    const heute = new Date();
-    berechneMonatsuebersicht(heute.getFullYear(), heute.getMonth());
-    berechneMonatsuebersicht(aktuellesDatum.getFullYear(), aktuellesDatum.getMonth());
-
+    berechneMonatsuebersicht(aktuellesJahr, aktuellerMonat);
   } else {
     alert('Bitte gib ein gültiges Budget ein.');
   }
 });
 
-
 // Budget löschen
 if (clearBudgetBtn) {
   clearBudgetBtn.addEventListener('click', () => {
+    const key = getBudgetKey(aktuellesJahr, aktuellerMonat);
+    localStorage.removeItem(key);
     budgetInput.value = '';
-    localStorage.removeItem('userBudget');
-    alert('Budget wurde gelöscht.');
+    alert(`Budget für ${formatMonat(aktuellesJahr, aktuellerMonat)} wurde gelöscht.`);
+    ladeBudgetUndWerte(aktuellesJahr, aktuellerMonat); // Anzeigen aktualisieren
   });
 }
-// Budget-Verwaltungs Popup Ende
+
+// =========== Budget-Verwaltungs Popup Ende
 
 // Aktualisierungsbutton für Seite im Titel Start
 document.getElementById('refresh-icon').addEventListener('keydown', (e) => {
