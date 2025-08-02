@@ -1132,6 +1132,55 @@ button[type="submit"]:hover {
 
 /* Budget-Verwaltungs Popup Start */
 /* Gemeinsames Overlay-Design */
+
+#monatsteuerelemente1 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin: 2rem 0 1rem;
+}
+
+#monatsteuerelemente1 button {
+  font-size: 1.3rem;
+  font-weight: 700;
+  padding: 0.4rem;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 123, 255, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+#monatsteuerelemente1 button:hover,
+#monatsteuerelemente1 button:focus {
+  background-color: #0056b3;
+  box-shadow: 0 4px 10px rgba(0, 86, 179, 0.6);
+  outline: none;
+}
+
+#monatsteuerelemente1 #monat-anzeige {
+  font-weight: bold;
+  font-size: 1.1rem;
+  background-color: #f0f0f0;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  user-select: none;
+  min-width: 100px;
+  text-align: center;
+}
+
+
+
+
 .overlay {
   position: fixed;
   top: 0;
