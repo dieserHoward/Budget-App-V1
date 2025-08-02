@@ -15,7 +15,6 @@
 
 
 <!---========================= HIER HTML ===========================-->
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -77,6 +76,13 @@
       <button class="close-btn" id="budget-close" aria-label="Schließen">&times;</button>
       <h2 class="popup-title">Budget festlegen</h2>
     </div>
+
+   <div id="monatsteuerelemente1">
+  <button id="prev-month" aria-label="Vorheriger Monat">&#x25C0;</button>
+  <div id="monat-anzeige">August 2025</div>
+  <button id="next-month" aria-label="Nächster Monat">&#x25B6;</button>
+</div>
+
 
     <!-- Budget-Eingabe -->
     <input type="number" id="budget-input" placeholder="z. B. 1500 €" />
@@ -945,6 +951,7 @@ if (gespeicherteKategorien) {
 
 </body>
 </html>
+
 
 
 <!---========================= HIER HTML Ende aber ohne Schluss===========================-->
