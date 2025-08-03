@@ -87,6 +87,11 @@
     <!-- Budget-Eingabe -->
     <input type="number" id="budget-input" placeholder="z. B. 1500 €" />
 
+    <!-- Button: Vorgeschlagenes Budget übernehmen -->
+<button id="uebernehme-vorgeschlagenes-budget" class="secondary-btn">Vorgeschlagenes Budget übernehmen</button>
+
+
+
     <!-- Buttons -->
     <div class="budget-buttons">
       <button id="save-budget">Speichern</button>
@@ -531,43 +536,150 @@ items.forEach(item => {
     <div id="tab-content-uebersicht" class="active">
       
 
-<h2>Übersicht</h2>
+<!-- <h2>Übersicht</h2> -->
 
 
+<!-- Zeitraum Auswahl Übersicht -->
+<div id="uebersicht-zeitraum-auswahl-buttons">
+  <button data-modus="woche" class="uebersicht-zeitraum-button">Woche</button>
+  <button data-modus="monat" class="uebersicht-zeitraum-button active">Monat</button>
+  <button data-modus="jahr" class="uebersicht-zeitraum-button">Jahr</button>
+</div>
 
-  <!-- Zeitraum Auswahl -->
-  <div id="uebersicht-zeitraum-auswahl-buttons">
-    <button data-modus="woche" class="uebersicht-zeitraum-button">Woche</button>
-    <button data-modus="monat" class="uebersicht-zeitraum-button active">Monat</button>
-    <button data-modus="jahr" class="uebersicht-zeitraum-button">Jahr</button>
+<!-- Navigation Übersicht -->
+<div id="uebersicht-zeitraum-navigation">
+  <button id="uebersicht-zeitraum-zurueck" class="nav-button">&#x25C0;</button>
+  <span id="uebersicht-zeitraum-anzeige">Juli 2025</span>
+  <button id="uebersicht-zeitraum-vor" class="nav-button">&#x25B6;</button>
+</div>
+
+<!-- Slider Übersicht -->
+<div class="container">
+  <div class="nav" id="uebersicht-nav">
+    <div data-pos="0">Einnahmen</div>
+    <div data-pos="1">Budget</div>
+    <div data-pos="2">Ausgaben</div>
+    <div class="underline"></div>
   </div>
+</div>
 
-  <!-- Zeitraum Navigation -->
-  <div id="uebersicht-zeitraum-navigation">
-    <button id="uebersicht-zeitraum-zurueck" class="nav-button">&#x25C0;</button>
-    <span id="uebersicht-zeitraum-anzeige">Juli 2025</span>
-    <button id="uebersicht-zeitraum-vor" class="nav-button">&#x25B6;</button>
+<!-- Graph-Container -->
+<div id="uebersicht-graph-container">
+  <div id="uebersicht-chart-einnahmen" class="chart-section">
+    📈 Übersicht Einnahmen
+    <canvas id="uebersicht-chart" width="700" height="300" style="border:1px solid #ccc; border-radius:6px;"></canvas>
   </div>
-
-  <!-- Slider Ein- Ausgaben -->
-  <div class="container">
-    <div class="nav" id="uebersicht-nav">
-      <div data-pos="0">Einnahmen</div>
-      <div data-pos="1">Budget</div>
-      <div data-pos="2">Ausgaben</div>
-      <div class="underline"></div>
-    </div>
-  </div>
-
-  <!-- Charts oder Daten-Anzeigen (mit IDs wie unten erwartet) -->
-  <div id="uebersicht-chart-einnahmen">...</div>
-  <div id="uebersicht-chart-budget" style="display:none">...</div>
-  <div id="uebersicht-chart-ausgaben" style="display:none">...</div>
+  <div id="uebersicht-chart-budget" class="chart-section" style="display: none;">📊 Übersicht Budget</div>
+  <div id="uebersicht-chart-ausgaben" class="chart-section" style="display: none;">📉 Übersicht Ausgaben</div>
 </div>
 
 
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Variablen
+  let uebersichtDatum = new Date();
+  let uebersichtModus = 'monat';
+  let uebersichtAktiverChartIndex = 0;
 
-</div>
+  const uebersichtAnzeige = document.getElementById('uebersicht-zeitraum-anzeige');
+  const btnZurueck = document.getElementById('uebersicht-zeitraum-zurueck');
+  const btnVor = document.getElementById('uebersicht-zeitraum-vor');
+  const nav = document.getElementById('uebersicht-nav');
+  const underline = nav.querySelector('.underline');
+  const items = nav.querySelectorAll('div[data-pos]');
+
+  const chartSections = {
+    0: document.getElementById('uebersicht-chart-einnahmen'),
+    1: document.getElementById('uebersicht-chart-budget'),
+    2: document.getElementById('uebersicht-chart-ausgaben')
+  };
+
+  // Slider-Klick
+  items.forEach(item => {
+    item.addEventListener('click', () => {
+      const pos = parseInt(item.getAttribute('data-pos'));
+      underline.style.left = (pos * 33.3333) + '%';
+
+      chartSections[uebersichtAktiverChartIndex].style.display = 'none';
+      chartSections[pos].style.display = 'block';
+      uebersichtAktiverChartIndex = pos;
+
+      ladeUebersichtGraph();
+    });
+  });
+
+  // Zeitraum-Anzeige
+  function updateUebersichtAnzeige() {
+    if (uebersichtModus === 'jahr') {
+      uebersichtAnzeige.textContent = uebersichtDatum.getFullYear();
+    } else if (uebersichtModus === 'monat') {
+      uebersichtAnzeige.textContent = uebersichtDatum.toLocaleString('de-DE', { month: 'long', year: 'numeric' });
+    } else {
+      const start = new Date(uebersichtDatum);
+      const end = new Date(uebersichtDatum);
+      start.setDate(start.getDate() - start.getDay() + 1);
+      end.setDate(start.getDate() + 6);
+      uebersichtAnzeige.textContent = `${start.toLocaleDateString('de-DE')} – ${end.toLocaleDateString('de-DE')}`;
+    }
+  }
+
+  // Navigation
+  btnZurueck.addEventListener('click', () => {
+    if (uebersichtModus === 'jahr') uebersichtDatum.setFullYear(uebersichtDatum.getFullYear() - 1);
+    else if (uebersichtModus === 'monat') uebersichtDatum.setMonth(uebersichtDatum.getMonth() - 1);
+    else uebersichtDatum.setDate(uebersichtDatum.getDate() - 7);
+
+    updateUebersichtAnzeige();
+    ladeUebersichtGraph();
+  });
+
+  btnVor.addEventListener('click', () => {
+    if (uebersichtModus === 'jahr') uebersichtDatum.setFullYear(uebersichtDatum.getFullYear() + 1);
+    else if (uebersichtModus === 'monat') uebersichtDatum.setMonth(uebersichtDatum.getMonth() + 1);
+    else uebersichtDatum.setDate(uebersichtDatum.getDate() + 7);
+
+    updateUebersichtAnzeige();
+    ladeUebersichtGraph();
+  });
+
+  // Zeitraum-Buttons
+  document.querySelectorAll('.uebersicht-zeitraum-button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.uebersicht-zeitraum-button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      uebersichtModus = btn.getAttribute('data-modus');
+      updateUebersichtAnzeige();
+      ladeUebersichtGraph();
+    });
+  });
+
+  // Daten laden (analog zu ladeStatistikGraph, aber unabhängig)
+  function ladeUebersichtGraph() {
+    const daten = ladeDatenNachZeitraum(uebersichtDatum, uebersichtModus);
+    const gruppenData = JSON.parse(localStorage.getItem("kategorieGruppen")) || { einnahme: [], ausgabe: [] };
+
+    switch (uebersichtAktiverChartIndex) {
+      case 0:
+        const gruppenSummen = getGruppenSummenAusEinnahmen(daten.einnahmen, gruppenData);
+        renderEinnahmenGraph(gruppenSummen, "uebersicht-chart");
+        break;
+      case 1:
+        // renderBudgetGraph(...) für Übersicht ergänzen
+        break;
+      case 2:
+        // renderAusgabenGraph(...) für Übersicht ergänzen
+        break;
+    }
+  }
+
+  // Initial
+  updateUebersichtAnzeige();
+  ladeUebersichtGraph();
+});
+</script>
+
+
 <!-- ======================================= Übersicht-Tab Ende ======================================= -->
 
 
