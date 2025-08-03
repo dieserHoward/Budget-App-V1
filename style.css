@@ -1324,6 +1324,21 @@ button[type="submit"]:hover {
   color: #222;
 }
 
+/* Budget Vorschlag übernehmen */
+.secondary-btn {
+  margin-top: 8px;
+  background-color: #eee;
+  border: 1px solid #ccc;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-top: 20px;
+}
+.secondary-btn:hover {
+  background-color: #ddd;
+}
+
+
 
 /* Budget-Verwaltungs Popup Ende */
 
@@ -2167,9 +2182,9 @@ input, textarea, select {
 }
 
 .zeitraum-button.active {
-  background-color: #4a90e2;
+  background-color: #007bff;
   color: white;
-  border-color: #4a90e2;
+  border-color: #007bff;
 }
 
 #zeitraum-navigation {
@@ -2251,11 +2266,94 @@ input, textarea, select {
 /* Monatssteuerelemente Statistik-Tab Ende */
 
 
-/* Übersicht-Tab Start */
+/* ===================== Übersicht-Tab Start */
 #tab-content > div {
   display: none;
 }
 
 #tab-content > div.active {
   display: block;
+}
+
+/* ========== Übersicht-Tab: Zeitraum-Auswahl & Navigation ========== */
+/* ================= Übersicht-Tab: Zeitraum-Auswahl & Navigation ================= */
+
+/* Zeitraum-Buttons */
+#uebersicht-zeitraum-auswahl-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 30px;
+  margin-bottom: 10px;
+}
+
+
+
+
+.uebersicht-zeitraum-button {
+  padding: 8px 16px;
+  border: 1px solid #ccc;
+  background-color: #f4f4f4;
+  color: #333;
+  border-radius: 20px;
+  font-weight: 500;
+  margin-top: -22px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.uebersicht-zeitraum-button:hover {
+  background-color: #e6f0ff;
+}
+
+.uebersicht-zeitraum-button.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+/* Zeitraum-Navigation */
+#uebersicht-zeitraum-navigation {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin: 20px 0 1rem;
+}
+
+#uebersicht-zeitraum-navigation .nav-button {
+  font-size: 1.3rem;
+  font-weight: 700;
+  padding: 0.4rem;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 123, 255, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+#uebersicht-zeitraum-navigation .nav-button:hover,
+#uebersicht-zeitraum-navigation .nav-button:focus {
+  background-color: #0056b3;
+  box-shadow: 0 4px 10px rgba(0, 86, 179, 0.6);
+  outline: none;
+}
+
+#uebersicht-zeitraum-anzeige {
+  font-size: 1.1rem;
+  font-weight: bold;
+  min-width: 130px;
+  text-align: center;
+  background-color: #f0f0f0;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  user-select: none;
 }
