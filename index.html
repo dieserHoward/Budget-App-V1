@@ -15,6 +15,7 @@
 
 
 <!---========================= HIER HTML ===========================-->
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -577,6 +578,25 @@ items.forEach(item => {
     </div>
     <!-- Script -->
 <script>
+
+function istIntervallFuerDatum(intervall, datum) {
+  const tag = datum.getDay();
+  const tagDesMonats = datum.getDate();
+  const monat = datum.getMonth();
+  const jahr = datum.getFullYear();
+
+  return (
+    (intervall === "Monatsanfang" && tagDesMonats === 1) ||
+    (intervall === "Monatsende" && tagDesMonats === new Date(jahr, monat + 1, 0).getDate()) ||
+    (intervall === "Jahresanfang" && tagDesMonats === 1 && monat === 0) ||
+    (intervall === "Jahresende" && tagDesMonats === 31 && monat === 11) ||
+    (intervall === "Wochenanfang" && tag === 1) ||
+    (intervall === "Wochenende" && (tag === 0 || tag === 6))
+  );
+}
+
+
+
 document.addEventListener('DOMContentLoaded', () => {
     let uebersichtDatum = new Date();
     let uebersichtModus = 'monat';
@@ -653,27 +673,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function berechneZeitraum(modus, basisDatum) {
-        const start = new Date(basisDatum);
-        const end = new Date(basisDatum);
+    const start = new Date(basisDatum);
+    const end = new Date(basisDatum);
 
-        if (modus === 'monat') {
-            start.setDate(1);
-            end.setMonth(start.getMonth() + 1);
-            end.setDate(0);
-        } else if (modus === 'jahr') {
-            start.setMonth(0, 1);
-            end.setFullYear(start.getFullYear() + 1);
-            end.setDate(0);
-        } else {
-            const diff = basisDatum.getDay() === 0 ? -6 : 1 - basisDatum.getDay();
-            start.setDate(start.getDate() + diff);
-            end.setDate(start.getDate() + 6);
+    if (modus === 'monat') {
+        start.setDate(1);
+        end.setMonth(start.getMonth() + 1);
+        end.setDate(0);
+    } else if (modus === 'jahr') {
+        start.setMonth(0, 1);
+        end.setMonth(11, 31); // erstmal auf Jahresende setzen
+
+        const heute = new Date();
+
+        // Wenn das betrachtete Jahr das aktuelle Jahr ist → nur bis aktueller Monat
+        if (basisDatum.getFullYear() === heute.getFullYear()) {
+            end.setMonth(heute.getMonth() + 1, 0); // letzter Tag des aktuellen Monats
         }
-
-        start.setHours(0, 0, 0, 0);
-        end.setHours(23, 59, 59, 999);
-        return { start, end };
+    } else {
+        const diff = basisDatum.getDay() === 0 ? -6 : 1 - basisDatum.getDay();
+        start.setDate(start.getDate() + diff);
+        end.setDate(start.getDate() + 6);
     }
+
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+}
+
 
     function istEintragImZeitraumWiederkehrend(eintrag, start, end) {
     const intervallTyp = eintrag.intervall;
@@ -723,33 +750,40 @@ function ladeUebersichtGraph() {
   const wiederkehrende = JSON.parse(localStorage.getItem("wiederkehrendeEintraege") || "[]");
 
   const berechneSummen = (typ) => {
-    const map = new Map();
+  const map = new Map();
 
-    // Einmalige Einträge filtern
-    const einmalig = einmalige.filter(e => e.typ === typ && new Date(e.datum) >= start && new Date(e.datum) <= end);
+  // Einmalige Einträge sammeln
+  const einmalig = einmalige.filter(e => e.typ === typ && new Date(e.datum) >= start && new Date(e.datum) <= end);
 
-    // Wiederkehrende Einträge im Zeitraum prüfen
-    const wiederkehrend = wiederkehrende.filter(e => {
-      if (e.typ !== typ) return false;
+  // Einmalige in Map addieren
+  einmalig.forEach(e => {
+    map.set(e.kategorie, (map.get(e.kategorie) || 0) + parseFloat(e.betrag));
+  });
+
+  // Wiederkehrende Einträge korrekt aufsummieren
+  wiederkehrende
+    .filter(e => e.typ === typ)
+    .forEach(e => {
       const startDatum = new Date(e.start);
       const endDatum = new Date(e.ende);
-      const tag = new Date(start);
+      const betrag = parseFloat(e.betrag);
+      const aktuelle = new Date(start);
 
-      while (tag <= end) {
-        if (tag >= startDatum && tag <= endDatum && istIntervallFuerDatum(e.intervall, tag)) {
-          return true;
+      while (aktuelle <= end) {
+        const kopie = new Date(aktuelle);
+
+        if (kopie >= startDatum && kopie <= endDatum && istIntervallFuerDatum(e.intervall, kopie)) {
+          map.set(e.kategorie, (map.get(e.kategorie) || 0) + betrag);
         }
-        tag.setDate(tag.getDate() + 1);
+
+        // nächsten Tag prüfen
+        aktuelle.setDate(aktuelle.getDate() + 1);
       }
-      return false;
     });
 
-    [...einmalig, ...wiederkehrend].forEach(e => {
-      map.set(e.kategorie, (map.get(e.kategorie) || 0) + parseFloat(e.betrag));
-    });
+  return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
+};
 
-    return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
-  };
 
   const renderListe = (zielId, daten, typ) => {
   const container = document.getElementById(zielId);
@@ -1213,7 +1247,6 @@ if (gespeicherteKategorien) {
 
 </body>
 </html>
-
 
 
 <!---========================= HIER HTML Ende aber ohne Schluss===========================-->
