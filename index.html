@@ -15,7 +15,6 @@
 
 
 <!---========================= HIER HTML ===========================-->
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -559,226 +558,276 @@ items.forEach(item => {
     </div>
 
     <!-- Graph-Container -->
-    <div id="uebersicht-graph-container">
+<div id="uebersicht-graph-container">
       <div id="uebersicht-chart-einnahmen" class="chart-section">
-        📈 Übersicht Einnahmen
-
-        <!-- Einnahmenliste -->
-<div id="einnahmen-list" style="margin-top: 20px;"></div>
-
-<!-- Fester Test-Bereich für August 2025 -->
-<div id="test-einnahmen-august" style="margin-top: 40px; padding: 10px; border: 1px solid #ccc; background: #f9f9f9;">
-  <h3>Einnahmen im August 2025 (Testausgabe)</h3>
-  <div id="einnahmen-list-august"></div> <!-- 👈 eindeutige ID -->
-</div>
-
-
-
+        <!-- 📈 Übersicht Einnahmen -->
+        <div id="einnahmen-list" style="margin-top: 20px;"></div>
+        <div id="test-einnahmen-august" style="margin-top: 0px; padding: 0;">
+          <div id="einnahmen-list-august"></div>
+        </div>
       </div>
-      <div id="uebersicht-chart-invest" class="chart-section" style="display: none;">📊 Übersicht Invest</div>
-      <div id="uebersicht-chart-ausgaben" class="chart-section" style="display: none;">📉 Übersicht Ausgaben</div>
+      <div id="uebersicht-chart-invest" class="chart-section" style="display: none;">
+        <!-- 📊 Übersicht Invest -->
+        <div id="invest-list" style="margin-top: 20px;"></div>
+      </div>
+      <div id="uebersicht-chart-ausgaben" class="chart-section" style="display: none;">
+        <!-- 📉 Übersicht Ausgaben -->
+        <div id="ausgaben-list" style="margin-top: 20px;"></div>
+      </div>
     </div>
-
     <!-- Script -->
-    <script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    let uebersichtDatum = new Date();
+    let uebersichtModus = 'monat';
+    let uebersichtAktiverChartIndex = 0;
 
+    const uebersichtAnzeige = document.getElementById('uebersicht-zeitraum-anzeige');
+    const btnZurueck = document.getElementById('uebersicht-zeitraum-zurueck');
+    const btnVor = document.getElementById('uebersicht-zeitraum-vor');
+    const nav = document.getElementById('uebersicht-nav');
+    const underline = nav.querySelector('.underline');
+    const items = nav.querySelectorAll('div[data-pos]');
 
+    const chartSections = {
+        0: document.getElementById('uebersicht-chart-einnahmen'),
+        1: document.getElementById('uebersicht-chart-invest'),
+        2: document.getElementById('uebersicht-chart-ausgaben')
+    };
 
-
-
-      document.addEventListener('DOMContentLoaded', () => {
-       
-
-        let uebersichtDatum = new Date();
-        let uebersichtModus = 'monat';
-        let uebersichtAktiverChartIndex = 0;
-
-        const uebersichtAnzeige = document.getElementById('uebersicht-zeitraum-anzeige');
-        const btnZurueck = document.getElementById('uebersicht-zeitraum-zurueck');
-        const btnVor = document.getElementById('uebersicht-zeitraum-vor');
-        const nav = document.getElementById('uebersicht-nav');
-        const underline = nav.querySelector('.underline');
-        const items = nav.querySelectorAll('div[data-pos]');
-
-        const chartSections = {
-          0: document.getElementById('uebersicht-chart-einnahmen'),
-          1: document.getElementById('uebersicht-chart-invest'),
-          2: document.getElementById('uebersicht-chart-ausgaben')
-        };
-
-        // Tab-Klick
-        items.forEach(item => {
-          item.addEventListener('click', () => {
+    items.forEach(item => {
+        item.addEventListener('click', () => {
             const pos = parseInt(item.getAttribute('data-pos'));
             underline.style.left = (pos * 33.3333) + '%';
 
-            chartSections[uebersichtAktiverChartIndex].style.display = 'none';
+            Object.values(chartSections).forEach(section => section.style.display = 'none');
             chartSections[pos].style.display = 'block';
             uebersichtAktiverChartIndex = pos;
 
             ladeUebersichtGraph();
-          });
         });
+    });
 
-        // Zeitraum-Anzeige aktualisieren
-        function updateUebersichtAnzeige() {
-          if (uebersichtModus === 'jahr') {
+    function updateUebersichtAnzeige() {
+        if (uebersichtModus === 'jahr') {
             uebersichtAnzeige.textContent = uebersichtDatum.getFullYear();
-          } else if (uebersichtModus === 'monat') {
+        } else if (uebersichtModus === 'monat') {
             uebersichtAnzeige.textContent = uebersichtDatum.toLocaleString('de-DE', { month: 'long', year: 'numeric' });
-          } else {
+        } else {
             const start = new Date(uebersichtDatum);
             const end = new Date(uebersichtDatum);
             start.setDate(start.getDate() - start.getDay() + 1);
             end.setDate(start.getDate() + 6);
             uebersichtAnzeige.textContent = `${start.toLocaleDateString('de-DE')} – ${end.toLocaleDateString('de-DE')}`;
-          }
         }
+    }
 
-        // Navigation Buttons
-        btnZurueck.addEventListener('click', () => {
-          if (uebersichtModus === 'jahr') uebersichtDatum.setFullYear(uebersichtDatum.getFullYear() - 1);
-          else if (uebersichtModus === 'monat') uebersichtDatum.setMonth(uebersichtDatum.getMonth() - 1);
-          else uebersichtDatum.setDate(uebersichtDatum.getDate() - 7);
+    btnZurueck.addEventListener('click', () => {
+        if (uebersichtModus === 'jahr') uebersichtDatum.setFullYear(uebersichtDatum.getFullYear() - 1);
+        else if (uebersichtModus === 'monat') uebersichtDatum.setMonth(uebersichtDatum.getMonth() - 1);
+        else uebersichtDatum.setDate(uebersichtDatum.getDate() - 7);
+        updateUebersichtAnzeige();
+        ladeUebersichtGraph();
+    });
 
-          updateUebersichtAnzeige();
-          ladeUebersichtGraph();
-        });
+    btnVor.addEventListener('click', () => {
+        if (uebersichtModus === 'jahr') uebersichtDatum.setFullYear(uebersichtDatum.getFullYear() + 1);
+        else if (uebersichtModus === 'monat') uebersichtDatum.setMonth(uebersichtDatum.getMonth() + 1);
+        else uebersichtDatum.setDate(uebersichtDatum.getDate() + 7);
+        updateUebersichtAnzeige();
+        ladeUebersichtGraph();
+    });
 
-        btnVor.addEventListener('click', () => {
-          if (uebersichtModus === 'jahr') uebersichtDatum.setFullYear(uebersichtDatum.getFullYear() + 1);
-          else if (uebersichtModus === 'monat') uebersichtDatum.setMonth(uebersichtDatum.getMonth() + 1);
-          else uebersichtDatum.setDate(uebersichtDatum.getDate() + 7);
-
-          updateUebersichtAnzeige();
-          ladeUebersichtGraph();
-        });
-
-        // Zeitraum-Modus Buttons
-        document.querySelectorAll('.uebersicht-zeitraum-button').forEach(btn => {
-          btn.addEventListener('click', () => {
+    document.querySelectorAll('.uebersicht-zeitraum-button').forEach(btn => {
+        btn.addEventListener('click', () => {
             document.querySelectorAll('.uebersicht-zeitraum-button').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-
             uebersichtModus = btn.getAttribute('data-modus');
             updateUebersichtAnzeige();
             ladeUebersichtGraph();
-          });
         });
+    });
 
-
-      });
-
-
-
-  // Hilfsfunktion: String → Date
-  function parseDate(d) {
-    return new Date(d + "T00:00:00");
-  }
-
-  // Zeitraum berechnen
-  function berechneZeitraum(modus, basisDatum) {
-    const start = new Date(basisDatum);
-    const end = new Date(basisDatum);
-
-    if (modus === 'monat') {
-      start.setDate(1);
-      end.setMonth(start.getMonth() + 1);
-      end.setDate(0); // letzter Tag des Monats
-    } else if (modus === 'jahr') {
-      start.setMonth(0, 1);
-      end.setFullYear(start.getFullYear() + 1);
-      end.setDate(0); // 31. Dezember
-    } else if (modus === 'woche') {
-      const day = basisDatum.getDay();
-      const diff = day === 0 ? -6 : 1 - day; // Montag als Wochenanfang
-      start.setDate(start.getDate() + diff);
-      end.setDate(start.getDate() + 6);
+    function parseDate(d) {
+        return new Date(d + "T00:00:00");
     }
 
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
-    return { start, end };
-  }
+    function berechneZeitraum(modus, basisDatum) {
+        const start = new Date(basisDatum);
+        const end = new Date(basisDatum);
 
-  // Wiederkehrende Einträge prüfen
-  function istEintragImZeitraumWiederkehrend(e, start, end) {
-    const eintragStart = parseDate(e.start);
-    const eintragEnd = parseDate(e.ende);
+        if (modus === 'monat') {
+            start.setDate(1);
+            end.setMonth(start.getMonth() + 1);
+            end.setDate(0);
+        } else if (modus === 'jahr') {
+            start.setMonth(0, 1);
+            end.setFullYear(start.getFullYear() + 1);
+            end.setDate(0);
+        } else {
+            const diff = basisDatum.getDay() === 0 ? -6 : 1 - basisDatum.getDay();
+            start.setDate(start.getDate() + diff);
+            end.setDate(start.getDate() + 6);
+        }
 
-    if (eintragEnd < start || eintragStart > end) return false;
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        return { start, end };
+    }
 
-    const intervallTyp = e.intervall;
+    function istEintragImZeitraumWiederkehrend(eintrag, start, end) {
+    const intervallTyp = eintrag.intervall;
+    const startDatum = new Date(eintrag.start);
+    const endDatum = new Date(eintrag.ende);
+    
+    if (endDatum < start || startDatum > end) return false;
 
-    let aktuelle = new Date(eintragStart);
+    const aktuelle = new Date(startDatum);
 
-    while (aktuelle <= end) {
-      let datumGilt = false;
+    while (aktuelle <= end && aktuelle <= endDatum) {
+        const tag = aktuelle.getDay();
+        const datum = aktuelle.getDate();
+        const monat = aktuelle.getMonth();
+        const jahr = aktuelle.getFullYear();
 
-      if (
-        (intervallTyp === "Monatsanfang" && aktuelle.getDate() === 1) ||
-        (intervallTyp === "Monatsende" && new Date(aktuelle.getFullYear(), aktuelle.getMonth() + 1, 0).getDate() === aktuelle.getDate()) ||
-        (intervallTyp === "Jahresanfang" && aktuelle.getDate() === 1 && aktuelle.getMonth() === 0) ||
-        (intervallTyp === "Jahresende" && aktuelle.getDate() === 31 && aktuelle.getMonth() === 11) ||
-        (intervallTyp === "Wochenanfang" && aktuelle.getDay() === 1) || // Montag
-        (intervallTyp === "Wochenende" && (aktuelle.getDay() === 0 || aktuelle.getDay() === 6)) // So/Sa
-      ) {
-        datumGilt = aktuelle >= start && aktuelle <= end;
-      }
+        const istGültig =
+            (intervallTyp === "Monatsanfang" && datum === 1) ||
+            (intervallTyp === "Monatsende" && datum === new Date(jahr, monat + 1, 0).getDate()) ||
+            (intervallTyp === "Jahresanfang" && datum === 1 && monat === 0) ||
+            (intervallTyp === "Jahresende" && datum === 31 && monat === 11) ||
+            (intervallTyp === "Wochenanfang" && tag === 1) ||
+            (intervallTyp === "Wochenende" && (tag === 0 || tag === 6));
 
-      if (datumGilt) return true;
+        if (istGültig && aktuelle >= start && aktuelle <= end) {
+            return true;
+        }
 
-      // Inkrementieren
-      if (intervallTyp.startsWith("Monat")) aktuelle.setMonth(aktuelle.getMonth() + 1);
-      else if (intervallTyp.startsWith("Jahr")) aktuelle.setFullYear(aktuelle.getFullYear() + 1);
-      else aktuelle.setDate(aktuelle.getDate() + 1);
+        // Springe zum nächsten möglichen Datum basierend auf Intervall
+        if (intervallTyp.startsWith("Monat")) {
+            aktuelle.setMonth(aktuelle.getMonth() + 1);
+            aktuelle.setDate(1);
+        } else if (intervallTyp.startsWith("Jahr")) {
+            aktuelle.setFullYear(aktuelle.getFullYear() + 1);
+            aktuelle.setMonth(0, 1);
+        } else {
+            aktuelle.setDate(aktuelle.getDate() + 1);
+        }
     }
 
     return false;
+}
+
+function ladeUebersichtGraph() {
+  const { start, end } = berechneZeitraum(uebersichtModus, new Date(uebersichtDatum));
+  const einmalige = JSON.parse(localStorage.getItem("eintraege") || "[]");
+  const wiederkehrende = JSON.parse(localStorage.getItem("wiederkehrendeEintraege") || "[]");
+
+  const berechneSummen = (typ) => {
+    const map = new Map();
+
+    // Einmalige Einträge filtern
+    const einmalig = einmalige.filter(e => e.typ === typ && new Date(e.datum) >= start && new Date(e.datum) <= end);
+
+    // Wiederkehrende Einträge im Zeitraum prüfen
+    const wiederkehrend = wiederkehrende.filter(e => {
+      if (e.typ !== typ) return false;
+      const startDatum = new Date(e.start);
+      const endDatum = new Date(e.ende);
+      const tag = new Date(start);
+
+      while (tag <= end) {
+        if (tag >= startDatum && tag <= endDatum && istIntervallFuerDatum(e.intervall, tag)) {
+          return true;
+        }
+        tag.setDate(tag.getDate() + 1);
+      }
+      return false;
+    });
+
+    [...einmalig, ...wiederkehrend].forEach(e => {
+      map.set(e.kategorie, (map.get(e.kategorie) || 0) + parseFloat(e.betrag));
+    });
+
+    return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
+  };
+
+  const renderListe = (zielId, daten, typ) => {
+  const container = document.getElementById(zielId);
+  container.innerHTML = "";
+
+  if (daten.length === 0) {
+    container.textContent = `Keine ${typ} im ausgewählten Zeitraum.`;
+    return;
   }
 
-  // Hauptfunktion zum Laden der Einnahmen
-  function ladeUebersichtGraph() {
-    const { start, end } = berechneZeitraum(uebersichtModus, new Date(uebersichtDatum));
+  // Gesamtbetrag berechnen
+  const gesamt = daten.reduce((sum, [, betrag]) => sum + betrag, 0);
 
-    const einmalige = JSON.parse(localStorage.getItem("eintraege") || "[]");
-    const wiederkehrende = JSON.parse(localStorage.getItem("wiederkehrendeEintraege") || "[]");
+  // Farbauswahl je nach Typ
+  const farbe = typ === "einnahmen" ? "green" : (typ === "ausgaben" ? "red" : "#0077b6");
 
-    const gefilterteEinmalige = einmalige.filter(e => {
-      return e.typ === "einnahme" && parseDate(e.datum) >= start && parseDate(e.datum) <= end;
-    });
+  // Gesamtsummenanzeige
+  const summeDiv = document.createElement("div");
+  summeDiv.textContent = ` ${typ === "einnahmen" ? "" : ""}${gesamt.toFixed(2).replace(".", ",")} €`;
+  summeDiv.style.fontSize = "17px";
+  summeDiv.style.fontWeight = "bold";
+  summeDiv.style.color = farbe;
+  summeDiv.style.marginBottom = "12px";
+  summeDiv.style.fontFamily = "sans-serif";
+  summeDiv.textContent = ` ${typ === "einnahmen" ? "" : ""}${gesamt.toFixed(2).replace(".", ",")} €`;
+summeDiv.classList.add("gesamt-summe");
 
-    const gefilterteWiederkehrende = wiederkehrende.filter(e => {
-      return e.typ === "einnahme" && istEintragImZeitraumWiederkehrend(e, start, end);
-    });
+  container.appendChild(summeDiv);
 
-    // Ausgabe in HTML
-    const container = document.getElementById("einnahmen-list-august");
-    container.innerHTML = "";
+  // Kategorie-Liste rendern
+  const liste = document.createElement("div");
+  liste.style.display = "flex";
+  liste.style.flexDirection = "column";
+  liste.style.gap = "10px";
 
-    if (gefilterteEinmalige.length === 0 && gefilterteWiederkehrende.length === 0) {
-      container.textContent = "Keine Einnahmen im ausgewählten Zeitraum.";
-      return;
-    }
+  daten.forEach(([kategorie, summe]) => {
+    const zeile = document.createElement("div");
+    zeile.style.display = "flex";
+    zeile.style.justifyContent = "space-between";
+    zeile.style.alignItems = "center";
+    zeile.style.padding = "8px 12px";
+    zeile.style.borderBottom = "1px solid #eee";
+    zeile.style.backgroundColor = "#fff";
+    zeile.style.borderRadius = "6px";
+    zeile.style.boxShadow = "0 1px 3px rgba(0, 0, 0, 0.05)";
+    zeile.style.fontFamily = "sans-serif";
+    zeile.style.fontSize = "15px";
 
-    const liste = document.createElement("ul");
+    const kategorieSpan = document.createElement("span");
+    kategorieSpan.textContent = kategorie;
+    kategorieSpan.style.fontWeight = "500";
 
-    gefilterteEinmalige.forEach(e => {
-      const li = document.createElement("li");
-      li.textContent = `📥 ${e.kategorie}: ${e.betrag.toFixed(2)} € am ${e.datum}`;
-      liste.appendChild(li);
-    });
+    const betragSpan = document.createElement("span");
+    betragSpan.textContent = `${typ === "einnahmen" ? "+" : ""}${summe.toFixed(2).replace(".", ",")} €`;
+    betragSpan.style.fontWeight = "bold";
+    betragSpan.style.color = farbe;
 
-    gefilterteWiederkehrende.forEach(e => {
-      const li = document.createElement("li");
-      li.textContent = `🔁 ${e.kategorie}: ${e.betrag.toFixed(2)} € (Intervall: ${e.intervall})`;
-      liste.appendChild(li);
-    });
+    zeile.appendChild(kategorieSpan);
+    zeile.appendChild(betragSpan);
+    liste.appendChild(zeile);
+  });
 
-    container.appendChild(liste);
-  }
+  container.appendChild(liste);
+};
 
-    </script>
+
+  renderListe("einnahmen-list-august", berechneSummen("einnahme"), "einnahmen");
+  renderListe("ausgaben-list", berechneSummen("ausgabe"), "ausgaben");
+  renderListe("invest-list", berechneSummen("investition"), "investitionen");
+}
+
+
+
+    updateUebersichtAnzeige();
+    ladeUebersichtGraph();
+});
+</script>
+
 
 <!-- ======================================= Übersicht-Tab Ende ======================================= -->
 
@@ -1164,6 +1213,7 @@ if (gespeicherteKategorien) {
 
 </body>
 </html>
+
 
 
 <!---========================= HIER HTML Ende aber ohne Schluss===========================-->
