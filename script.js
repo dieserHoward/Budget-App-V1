@@ -1301,6 +1301,39 @@ if (uebernehmeBtn) {
 }
 
 
+// == Neuer Button für Sparen berücksichtigen ==
+// Funktion, um die gespeicherten Sparsummen zu laden (alle drei addieren)
+function getGesamtSparsumme() {
+  const daten = JSON.parse(localStorage.getItem("sparquoten")) || {};
+  const kurz = parseFloat(daten.kurzSumme) || 0;
+  const mittel = parseFloat(daten.mittelSumme) || 0;
+  const lang = parseFloat(daten.langSumme) || 0;
+  return kurz + mittel + lang;
+}
+
+// Bestehenden Button EventListener bleibt erhalten:
+
+
+// Neuer Button EventListener
+const minusSparenBtn = document.getElementById('uebernehme-budget-minus-sparen');
+if (minusSparenBtn) {
+  minusSparenBtn.addEventListener('click', () => {
+    const vorgeschlagenText = document.getElementById("vorgeschlagenes-budget").textContent;
+    const vorgeschlagenesBudget = parseFloat(vorgeschlagenText.replace("€", "").replace(",", ".").trim());
+    const gesamtSparsumme = getGesamtSparsumme();
+
+    if (!isNaN(vorgeschlagenesBudget)) {
+      const neuesBudget = vorgeschlagenesBudget - gesamtSparsumme;
+      budgetInput.value = neuesBudget.toFixed(2);
+    } else {
+      alert("Das vorgeschlagene Budget konnte nicht übernommen werden.");
+    }
+  });
+}
+
+
+
+
 
 // =========== Budget-Verwaltungs Popup Ende
 
@@ -2023,3 +2056,32 @@ document.getElementById("zeitraum-vor").addEventListener("click", () => {
 
 
 // ========================= Übersicht-Tab Ende =========================
+
+// ========================= Sparer-Verwaltung Start =========================
+document.getElementById("open-sparer-popup").addEventListener("click", function() {
+  document.getElementById("sparen-popup-overlay").style.display = "block";
+});
+
+document.getElementById("sparen-popup-close").addEventListener("click", function() {
+  document.getElementById("sparen-popup-overlay").style.display = "none";
+});
+
+document.getElementById("sparen-speichern").addEventListener("click", function() {
+  const kurzSumme = document.getElementById("kurz-summe").value;
+  const kurzQuote = document.getElementById("kurz-quote").value;
+  const mittelSumme = document.getElementById("mittel-summe").value;
+  const mittelQuote = document.getElementById("mittel-quote").value;
+  const langSumme = document.getElementById("lang-summe").value;
+  const langQuote = document.getElementById("lang-quote").value;
+
+  // Beispiel-Logging – hier kannst du deine eigene Speicherlogik einbauen
+  console.log("Kurzfristig:", kurzSumme, "€ oder", kurzQuote, "%");
+  console.log("Mittelfristig:", mittelSumme, "€ oder", mittelQuote, "%");
+  console.log("Langfristig:", langSumme, "€ oder", langQuote, "%");
+
+  alert("Sparquoten gespeichert!");
+
+  document.getElementById("sparen-popup-overlay").style.display = "none";
+});
+
+// ========================= Sparer-Verwaltung Ende =========================
