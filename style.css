@@ -2491,5 +2491,6 @@ body {
 #header {
   padding-top: env(safe-area-inset-top);
   background-color: white;
+  margin-bottom: 200px;
 }
 
