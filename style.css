@@ -2479,3 +2479,17 @@ input, textarea, select {
   }
 
 /* ================= Sparer-Verwaltung Ende ===================== */
+
+html, body {
+  background-color: white;
+}
+
+body {
+  padding-top: env(safe-area-inset-top);
+}
+
+#header {
+  padding-top: env(safe-area-inset-top);
+  background-color: white;
+}
+
