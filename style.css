@@ -1437,7 +1437,7 @@ button[type="submit"]:hover {
 
 /* Scrollbarer Bereich auf Titeseite*/
 #scroll-content {
-  margin-top: 370px; /* <--- Anpassen je nach tatsächlicher Höhe vom fixierten Bereich */
+  margin-top: 360px; /* <--- Anpassen je nach tatsächlicher Höhe vom fixierten Bereich */
   padding: 1rem;
 }
 
@@ -2264,6 +2264,21 @@ input, textarea, select {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   user-select: none;
 }
+
+/* Statistik-Tab responsive Abstände */
+#tab-content-statistik {
+  padding-top: calc(20px + env(safe-area-inset-top)); /* Platz für Safe Area */
+  background-color: white; /* gegen Durchscheinen */
+}
+
+/* Optional für besonders kleine Screens */
+@media (max-width: 768px) {
+  #tab-content-statistik {
+    padding-top: calc(40px + env(safe-area-inset-top)); /* ggf. mehr Platz */
+  }
+}
+
+
 /* Monatssteuerelemente Statistik-Tab Ende */
 
 
@@ -2284,7 +2299,7 @@ input, textarea, select {
   display: flex;
   justify-content: center;
   gap: 10px;
-  margin-top: 30px;
+  margin-top: -34px;
   margin-bottom: 10px;
 }
 
@@ -2298,7 +2313,6 @@ input, textarea, select {
   color: #333;
   border-radius: 20px;
   font-weight: 500;
-  margin-top: -21px;
   cursor: pointer;
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
@@ -2392,6 +2406,17 @@ input, textarea, select {
   box-sizing: border-box;
 }
 
+#tab-content-uebersicht {
+  padding-top: calc(-20px + env(safe-area-inset-top));
+  background-color: white; /* gegen Durchscheinen */
+}
+
+/* Optional – mehr Platz auf kleineren Geräten */
+@media (max-width: 768px) {
+  #tab-content-uebersicht {
+    padding-top: calc(-20px + env(safe-area-inset-top));
+  }
+}
 
 
 /* ================= Übersicht-Tab: Zeitraum-Auswahl & Navigation Ende ================= */
