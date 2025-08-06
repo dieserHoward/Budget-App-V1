@@ -2275,10 +2275,34 @@ input, textarea, select {
 
 /* Optional für besonders kleine Screens */
 @media (max-width: 768px) {
-  #tab-content-statistik {
-    padding-top: calc(40px + env(safe-area-inset-top)); /* ggf. mehr Platz */
+  #fixed-container-statistik{
+    padding-top: calc(0px + env(safe-area-inset-top)); /* ggf. mehr Platz */
+  }
+
+  #scroll-content-statistik {
+    margin-top: 195px; /* +30px, wenn du initial mit 200px arbeitest */
   }
 }
+
+#fixed-container-statistik {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  background-color: white;
+  padding-top: env(20px + safe-area-inset-top);
+  margin-top: 35px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Scrollbarer Bereich darunter – Abstand wird per JS gesetzt */
+#scroll-content-statistik {
+  padding: 1rem;
+  margin-top: 200px; /* JS übernimmt die tatsächliche Höhe */
+}
+
+
 
 
 /* Monatssteuerelemente Statistik-Tab Ende */
