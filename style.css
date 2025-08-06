@@ -1444,6 +1444,8 @@ button[type="submit"]:hover {
 
 
 
+
+
 /* virtuelles Keyboard */
 /* virtuelles Keyboard */
 #virtual-keyboard {
@@ -2407,7 +2409,7 @@ input, textarea, select {
 }
 
 #tab-content-uebersicht {
-  padding-top: calc(-20px + env(safe-area-inset-top));
+  padding-top: calc(1px + env(safe-area-inset-top));
   background-color: white; /* gegen Durchscheinen */
 }
 
@@ -2416,6 +2418,23 @@ input, textarea, select {
   #tab-content-uebersicht {
     padding-top: calc(-20px + env(safe-area-inset-top));
   }
+}
+
+
+#fixed-container-uebersicht {
+  position: fixed;
+  margin-top: 0px; /* kleinerer Abstand */
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  background-color: white;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+/* Scrollbarer Bereich auf Titeseite*/
+#scroll-content-uebersicht {
+  margin-top: 114px; /* <--- Anpassen je nach tatsächlicher Höhe vom fixierten Bereich */
+  padding: 1rem;
 }
 
 
