@@ -2416,7 +2416,7 @@ input, textarea, select {
 /* Optional – mehr Platz auf kleineren Geräten */
 @media (max-width: 768px) {
   #tab-content-uebersicht {
-    padding-top: calc(-20px + env(safe-area-inset-top));
+    padding-top: calc(20px + env(safe-area-inset-top));
   }
 }
 
