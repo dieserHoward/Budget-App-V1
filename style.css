@@ -2284,8 +2284,7 @@ input, textarea, select {
 /* Monatssteuerelemente Statistik-Tab Ende */
 
 
-/* ===================== Übersicht-Tab Start */
-/* ===================== Übersicht-Tab Start */
+
 /* ===================== Übersicht-Tab: Start ===================== */
 
 /* Tabs sichtbar/nicht sichtbar */
@@ -2433,6 +2432,16 @@ input, textarea, select {
 @media (max-width: 768px) {
   #uebersicht-zeitraum-navigation {
     gap: 0.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  #fixed-container-uebersicht {
+    margin-top: 85px; /* statt 55px → +30px auf dem Handy */
+  }
+
+  #scroll-content-uebersicht {
+    margin-top: 230px; /* +30px, wenn du initial mit 200px arbeitest */
   }
 }
 
