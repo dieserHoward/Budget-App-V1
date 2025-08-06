@@ -266,6 +266,10 @@
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
   border-radius: 12px 12px 0 0;
 }
+#tab-content > div.active {
+  display: block;
+  padding-bottom: 100px; /* Platz für fixe Leiste unten */
+}
 
 /* Neue Tab-Buttons als flex-column */
 .tab-button {
@@ -2280,7 +2284,7 @@ input, textarea, select {
   }
 
   #scroll-content-statistik {
-    margin-top: 195px; /* +30px, wenn du initial mit 200px arbeitest */
+    margin-top: 175px; /* +30px, wenn du initial mit 200px arbeitest */
   }
 }
 
@@ -2558,6 +2562,7 @@ input, textarea, select {
 /* ===== Notch ist nicht durchsichtig Start ===== */
 html, body {
   background-color: white;
+   height: 100%;
 }
 
 body {
