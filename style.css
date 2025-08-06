@@ -2372,6 +2372,13 @@ input, textarea, select {
   user-select: none;
 }
 
+#uebersicht-zeitraum-auswahl-buttons {
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  padding: 8px 0;
+}
+
+
 /* ===== Liste der Einträge im Übersicht-Tab ===== */
 .eintrag-zeile {
   display: flex;
@@ -2424,19 +2431,22 @@ input, textarea, select {
 /* Fixierter oberer Bereich */
 #fixed-container-uebersicht {
   position: fixed;
-  margin-top: 0px;
+  top: 0; /* <--- Wichtig */
   left: 0;
   width: 100%;
   z-index: 100;
-  background-color: white;
+  background-color: white; /* <--- wie unten */
   box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  padding-top: env(safe-area-inset-top);
 }
 
-/* Scrollbarer Bereich darunter */
-#scroll-content-uebersicht {
-  margin-top: 114px; /* ggf. anpassen je nach Höhe vom fixed-container */
-  padding: 1rem;
+/* Höhe des fixierten Bereichs auf kleinen Geräten anpassen */
+@media (max-width: 768px) {
+  #scroll-content-uebersicht {
+    margin-top: 190px; /* TEST: erhöht für mobile View (je nach realer Höhe vom fixed-container) */
+  }
 }
+
 
 /* ================= Übersicht-Tab: Zeitraum-Auswahl & Navigation Ende ================= */
 
