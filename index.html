@@ -15,7 +15,6 @@
 
 
 <!---========================= HIER HTML ===========================-->
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -533,6 +532,7 @@
     <div>So</div>
   </div>
   <div id="kalender"></div>
+  <div></div>
   <h2 style="font-size: 20px;">Einträge für ausgewählten Tag</h2>
 
 
@@ -547,7 +547,7 @@
     <div id="tab-content-statistik">
       
 
-      <h2>Statistik</h2>
+      
 
 <!-- Zeitraum Auswahl & Navigation im Statistik-Tab -->
 <!-- Zeitraum Auswahl im Button-Stil -->
@@ -637,6 +637,9 @@ items.forEach(item => {
 <div id="tab-content" style="margin-top: 100px;">
   <div id="tab-content-uebersicht" class="active">
 
+   <!-- Fixierter oberer Bereich -->
+  <div id="fixed-container-uebersicht">
+
     <!-- Zeitraum Auswahl Übersicht -->
     <div id="uebersicht-zeitraum-auswahl-buttons">
       <button data-modus="woche" class="uebersicht-zeitraum-button">Woche</button>
@@ -660,6 +663,10 @@ items.forEach(item => {
         <div class="underline"></div>
       </div>
     </div>
+</div>
+
+<!-- Scrollbarer Inhalt darunter -->
+  <div id="scroll-content-uebersicht">
 
     <!-- Graph-Container -->
 <div id="uebersicht-graph-container">
@@ -679,6 +686,7 @@ items.forEach(item => {
         <div id="ausgaben-list" style="margin-top: 20px;"></div>
       </div>
     </div>
+  </div>
     <!-- Script -->
 <script>
 
@@ -1350,6 +1358,7 @@ if (gespeicherteKategorien) {
 
 </body>
 </html>
+
 
 
 <!---========================= HIER HTML Ende aber ohne Schluss===========================-->
