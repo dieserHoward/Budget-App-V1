@@ -2285,6 +2285,7 @@ input, textarea, select {
 
 
 /* ===================== Übersicht-Tab Start */
+/* ===================== Übersicht-Tab Start */
 #tab-content > div {
   display: none;
 }
@@ -2294,7 +2295,6 @@ input, textarea, select {
 }
 
 /* ========== Übersicht-Tab: Zeitraum-Auswahl & Navigation ========== */
-/* ================= Übersicht-Tab: Zeitraum-Auswahl & Navigation ================= */
 
 /* Zeitraum-Buttons */
 #uebersicht-zeitraum-auswahl-buttons {
@@ -2304,9 +2304,6 @@ input, textarea, select {
   margin-top: -34px;
   margin-bottom: 10px;
 }
-
-
-
 
 .uebersicht-zeitraum-button {
   padding: 8px 16px;
@@ -2391,7 +2388,6 @@ input, textarea, select {
 }
 
 /* Container der Gesamtsumme */
-/* Gesamtsumme auffällig, aber dezent */
 .gesamt-summe {
   font-size: 18px;
   font-weight: 700;
@@ -2400,7 +2396,7 @@ input, textarea, select {
   border-radius: 12px;
   background-color: #e6f0ff;
   box-shadow: 0 2px 6px rgb(0 123 255 / 0.25);
-  max-width: 180px;      /* weniger breit */
+  max-width: 180px;
   margin: 0 auto 20px auto;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   user-select: none;
@@ -2408,22 +2404,27 @@ input, textarea, select {
   box-sizing: border-box;
 }
 
+/* Inhalt Übersicht-Tab */
 #tab-content-uebersicht {
   padding-top: calc(1px + env(safe-area-inset-top));
   background-color: white; /* gegen Durchscheinen */
 }
 
-/* Optional – mehr Platz auf kleineren Geräten */
+/* === Responsive Anpassung für kleine Geräte === */
 @media (max-width: 768px) {
   #tab-content-uebersicht {
-    padding-top: calc(20px + env(safe-area-inset-top));
+    padding-top: calc(20px + env(safe-area-inset-top)); /* Fix: kein negatives padding */
+  }
+
+  #scroll-content-uebersicht {
+    margin-top: 130px; /* leicht erhöht für kleinere Screens */
   }
 }
 
-
+/* Fixierter oberer Bereich */
 #fixed-container-uebersicht {
   position: fixed;
-  margin-top: 0px; /* kleinerer Abstand */
+  margin-top: 0px;
   left: 0;
   width: 100%;
   z-index: 100;
@@ -2431,12 +2432,11 @@ input, textarea, select {
   box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
-/* Scrollbarer Bereich auf Titeseite*/
+/* Scrollbarer Bereich darunter */
 #scroll-content-uebersicht {
-  margin-top: 114px; /* <--- Anpassen je nach tatsächlicher Höhe vom fixierten Bereich */
+  margin-top: 114px; /* ggf. anpassen je nach Höhe vom fixed-container */
   padding: 1rem;
 }
-
 
 /* ================= Übersicht-Tab: Zeitraum-Auswahl & Navigation Ende ================= */
 
