@@ -878,7 +878,7 @@ button[type="submit"]:hover {
 /* Formatierung der Monatsausgabenaussicht ganz oben auf der Titelseite */
 #monatsuebersicht {
   position: fixed;
-  top: 70px;
+  top: calc(60px + env(safe-area-inset-top));
   left: 5px;
   right: 5px;
   width: 100%;
@@ -893,7 +893,6 @@ button[type="submit"]:hover {
   -webkit-overflow-scrolling: touch; /* Smooth scroll auf iOS */
   z-index: 500;
   scrollbar-width: thin;   /* Dünner Scrollbar in Firefox */
-  margin-top: 40px;
 }
 
 .uebersicht-feld {
@@ -1349,11 +1348,9 @@ button[type="submit"]:hover {
 /* Budget Slider Start */
 #budget-progress-container {
   position: fixed;
-  top: 160px; /* Platz unter dem Header */
+  top: calc(160px + env(safe-area-inset-top));
   left: 5%;
-  
   width: 90%;
-  margin-top: 50px;
 }
 
 
@@ -1430,13 +1427,12 @@ button[type="submit"]:hover {
 /* Fixierter Container oben auf Titelseite */
 #fixed-top-container {
   position: fixed;
-  top: 0;
+  top: calc(-10px + env(safe-area-inset-top));
   left: 0;
   width: 100%;
   z-index: 100;
   background-color: white;
   box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-  margin-top: 40px;
 }
 
 /* Scrollbarer Bereich auf Titeseite*/
