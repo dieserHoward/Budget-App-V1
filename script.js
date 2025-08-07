@@ -292,6 +292,12 @@ document.getElementById("sort-tab-ausgabe").addEventListener("click", () => {
   renderSortierGruppen();
 });
 
+document.getElementById("sort-tab-investition").addEventListener("click", () => {
+  aktuelleSortierTyp = "investition";
+  setTabActive("investition");
+  renderSortierGruppen();
+});
+
 function setTabActive(typ) {
   document.querySelectorAll(".sort-tab").forEach(tab => tab.classList.remove("active"));
   document.getElementById(`sort-tab-${typ}`).classList.add("active");
@@ -300,8 +306,14 @@ function setTabActive(typ) {
 // Gruppenspeicher (nur temporär)
 let gruppen = JSON.parse(localStorage.getItem("kategorieGruppen")) || {
   einnahme: [],
-  ausgabe: []
+  ausgabe: [],
+  investition: []  // <-- hinzufügen
 };
+
+gruppen.einnahme = gruppen.einnahme || [];
+gruppen.ausgabe = gruppen.ausgabe || [];
+gruppen.investition = gruppen.investition || [];
+
 
 document.getElementById("add-group-btn").addEventListener("click", () => {
   gruppen[aktuelleSortierTyp].push({ name: "Neue Oberkategorie", items: [] });
@@ -449,6 +461,26 @@ sortierOverlay.addEventListener("click", (e) => {
     sortierOverlay.style.display = "none";
   }
 });
+
+
+// ===== =======Schalter für Sortiermodus
+const sortierSchalter = document.getElementById("sortier-schalter");
+
+// Initialzustand aus localStorage laden
+const istSortierModus = localStorage.getItem("sortierModusAktiv") === "true";
+sortierSchalter.checked = istSortierModus;
+
+// Beim Umschalten speichern
+sortierSchalter.addEventListener("change", () => {
+  localStorage.setItem("sortierModusAktiv", sortierSchalter.checked);
+});
+
+// Globale Funktion, die du überall verwenden kannst
+function istSortierModusAktiv() {
+  return localStorage.getItem("sortierModusAktiv") === "true";
+}
+
+
 
 
 // ============================== Kategorien sortieren Ende ===========================
