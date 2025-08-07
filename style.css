@@ -2387,6 +2387,44 @@ button.sort-tab.investition.active {
 
 /* Monatssteuerelemente Statistik-Tab Ende */
 
+/* ============ Budget Überschuss Anzeige ============ */
+.ueberschuss-box {
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  background: #fafafa;
+  margin-top: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.ueberschuss-box h3 {
+  margin-top: 0;
+  color: #2c3e50;
+  font-size: 1.2rem;
+}
+.ueberschuss-box ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.ueberschuss-box li {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px dashed #ddd;
+}
+.ueberschuss-box li:last-child {
+  border-bottom: none;
+}
+.ueberschuss-box strong {
+  color: #27ae60;
+}
+.ueberschuss-box strong.negativ {
+  color: #c0392b;
+}
+
+
+/* ===================== Statistik-Tab: Ende ===================== */
+
 
 
 /* ===================== Übersicht-Tab: Start ===================== */
