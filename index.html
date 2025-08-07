@@ -381,16 +381,29 @@
   ">
     <div class="popup-header">
   <h3 class="popup-title">Kategorien sortieren & gruppieren</h3>
+  
   <button id="kategorie-sortieren-popup-close" class="close-btn" aria-label="Schließen">&times;</button>
+</div>
+
+<!-- Schalter für sortieren -->
+ <div style="margin: 10px 0; text-align: center;">
+  <label class="toggle-switch">
+    <input type="checkbox" id="sortier-schalter">
+    <span class="slider"></span>
+    <span class="switch-label"></span>
+  </label>
 </div>
 
 
 
-    <div style="text-align: center; margin-bottom: 20px;">
-      <button id="sort-tab-einnahme" class="sort-tab active einnahme">Einzahlungen</button>
-      <button id="sort-tab-ausgabe" class="sort-tab ausgabe">Auszahlungen</button>
 
-    </div>
+    <div style="text-align: center; margin-bottom: 20px;">
+  <button id="sort-tab-einnahme" class="sort-tab active einnahme">Einzahlungen</button>
+  <button id="sort-tab-investition" class="sort-tab investition">Invest</button>
+  <button id="sort-tab-ausgabe" class="sort-tab ausgabe">Auszahlungen</button>
+  
+</div>
+
 
     <div id="sortier-container" class="sortier-wrapper"></div>
 
@@ -1010,16 +1023,29 @@ function ladeUebersichtGraph() {
 
   const berechneSummen = (typ) => {
   const map = new Map();
-
-  // Einmalige Einträge sammeln
   const einmalig = einmalige.filter(e => e.typ === typ && new Date(e.datum) >= start && new Date(e.datum) <= end);
+  const gruppenMap = new Map();
 
-  // Einmalige in Map addieren
+  const istSortiert = istSortierModusAktiv();
+  const gruppenDesTyps = gruppen[typ] || [];
+
+  // Hilfsfunktion: Finde Gruppennamen zu einer Kategorie
+  const findeGruppe = (kategorie) => {
+    for (const gruppe of gruppenDesTyps) {
+      if (gruppe.items.includes(kategorie)) return gruppe.name;
+    }
+    return null;
+  };
+
+  // === Einmalige Einträge ===
   einmalig.forEach(e => {
-    map.set(e.kategorie, (map.get(e.kategorie) || 0) + parseFloat(e.betrag));
+    const kategorie = e.kategorie;
+    const betrag = parseFloat(e.betrag);
+    const ziel = istSortiert ? (findeGruppe(kategorie) || "Nicht gruppiert") : kategorie;
+    map.set(ziel, (map.get(ziel) || 0) + betrag);
   });
 
-  // Wiederkehrende Einträge korrekt aufsummieren
+  // === Wiederkehrende Einträge ===
   wiederkehrende
     .filter(e => e.typ === typ)
     .forEach(e => {
@@ -1032,16 +1058,18 @@ function ladeUebersichtGraph() {
         const kopie = new Date(aktuelle);
 
         if (kopie >= startDatum && kopie <= endDatum && istIntervallFuerDatum(e.intervall, kopie)) {
-          map.set(e.kategorie, (map.get(e.kategorie) || 0) + betrag);
+          const kategorie = e.kategorie;
+          const ziel = istSortiert ? (findeGruppe(kategorie) || "Nicht gruppiert") : kategorie;
+          map.set(ziel, (map.get(ziel) || 0) + betrag);
         }
 
-        // nächsten Tag prüfen
         aktuelle.setDate(aktuelle.getDate() + 1);
       }
     });
 
   return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
 };
+
 
 
 const renderListe = (zielId, daten, typ) => {
