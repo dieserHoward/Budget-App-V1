@@ -627,25 +627,33 @@ items.forEach(item => {
 });
 });
 
-function getStartUndEnde(datum, modus) {
-  const start = new Date(datum);
-  const end = new Date(datum);
+// Aus Übersicht-Tab übernehmen
+function berechneZeitraum(modus, basisDatum) {
+  const start = new Date(basisDatum);
+  const end = new Date(basisDatum);
 
-  if (modus === "monat") {
+  if (modus === 'monat') {
     start.setDate(1);
-    end.setMonth(end.getMonth() + 1);
-    end.setDate(0); // letzter Tag des Monats
-  } else if (modus === "woche") {
-    const tag = datum.getDay();
-    start.setDate(datum.getDate() - tag + 1); // Montag
-    end.setDate(start.getDate() + 6); // Sonntag
-  } else if (modus === "jahr") {
+    end.setMonth(start.getMonth() + 1);
+    end.setDate(0);
+  } else if (modus === 'jahr') {
     start.setMonth(0, 1);
     end.setMonth(11, 31);
+    const heute = new Date();
+    if (basisDatum.getFullYear() === heute.getFullYear()) {
+      end.setMonth(heute.getMonth() + 1, 0);
+    }
+  } else { // Woche
+    const diff = basisDatum.getDay() === 0 ? -6 : 1 - basisDatum.getDay();
+    start.setDate(start.getDate() + diff);
+    end.setDate(start.getDate() + 6);
   }
 
+  start.setHours(0, 0, 0, 0);
+  end.setHours(23, 59, 59, 999);
   return { start, end };
 }
+
 
 
 </script>
@@ -659,14 +667,14 @@ function getStartUndEnde(datum, modus) {
     📈 Graph für Einnahmen
     <canvas id="chart" width="700" height="300" style="border:1px solid #ccc; border-radius:6px;"></canvas>
   </div>
-  <div id="chart-budget" class="chart-section" style="display: none;">📊 Graph für Budget
-    <div id="ueberschuss-anzeige" style="padding: 20px; border: 1px solid #ccc; border-radius: 8px; margin-top: 20px;">
+  <div id="chart-budget" class="chart-section" style="display: none;">
+    <div id="ueberschuss-anzeige" class="ueberschuss-box">
   <h3>💰 Überschuss-Analyse</h3>
   <ul>
-    <li>1. Gesamtüberschuss: <span id="stufe1">0 €</span></li>
-    <li>2. Nach kurzfristigem Sparen: <span id="stufe2">0 €</span></li>
-    <li>3. Nach Urlaubrücklagen: <span id="stufe3">0 €</span></li>
-    <li>4. Nach langfristigem Sparen: <span id="stufe4">0 €</span></li>
+    <li><span>1. Gesamtüberschuss:</span> <strong id="stufe1">0 €</strong></li>
+    <li><span>2. Nach kurzfristigem Sparen:</span> <strong id="stufe2">0 €</strong></li>
+    <li><span>3. Nach Urlaubrücklagen:</span> <strong id="stufe3">0 €</strong></li>
+    <li><span>4. Nach langfristigem Sparen:</span> <strong id="stufe4">0 €</strong></li>
   </ul>
 </div>
 </div>  
@@ -679,95 +687,83 @@ function getStartUndEnde(datum, modus) {
 
 <script>
 
-function berechneUndZeigeUeberschuss(zeitraumStart, zeitraumEnde) {
+function berechneUndZeigeUeberschuss(zeitraumStart, zeitraumEnde, modus) {
   const result = berechneGesamtUeberschuss(zeitraumStart, zeitraumEnde);
 
-  // Sparsummen abrufen
+  // Sparsummen (Monatsbasis) aus LocalStorage
   const sparquoten = JSON.parse(localStorage.getItem("sparquoten")) || {};
-  const kurz = parseFloat(sparquoten.kurzSumme) || 0;
-  const mittel = parseFloat(sparquoten.mittelSumme) || 0;
-  const lang = parseFloat(sparquoten.langSumme) || 0;
+  let kurz = parseFloat(sparquoten.kurzSumme) || 0;
+  let mittel = parseFloat(sparquoten.mittelSumme) || 0;
+  let lang = parseFloat(sparquoten.langSumme) || 0;
 
-  // Berechnung der Stufen
+  // Jahresmodus → Sparsummen hochrechnen
+  if (modus === "jahr") {
+    const heute = new Date();
+    const anzahlMonate = (zeitraumEnde.getFullYear() === heute.getFullYear())
+      ? heute.getMonth() + 1
+      : 12;
+    kurz *= anzahlMonate;
+    mittel *= anzahlMonate;
+    lang *= anzahlMonate;
+  }
+
+  // Berechnungen
   const stufe1 = result.ueberschuss;
   const stufe2 = stufe1 - kurz;
   const stufe3 = stufe2 - mittel;
   const stufe4 = stufe3 - lang;
 
-  // In HTML schreiben
-  document.getElementById("stufe1").innerText = `${stufe1.toFixed(2)} €`;
-  document.getElementById("stufe2").innerText = `${stufe2.toFixed(2)} €`;
-  document.getElementById("stufe3").innerText = `${stufe3.toFixed(2)} €`;
-  document.getElementById("stufe4").innerText = `${stufe4.toFixed(2)} €`;
+  // Werte ins UI schreiben mit Farb-Logik
+  setzeWert("stufe1", stufe1);
+  setzeWert("stufe2", stufe2);
+  setzeWert("stufe3", stufe3);
+  setzeWert("stufe4", stufe4);
+}
+
+// Hilfsfunktion für einheitliche Formatierung
+function setzeWert(id, betrag) {
+  const el = document.getElementById(id);
+  const formatierterBetrag = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(betrag);
+  el.innerText = `${formatierterBetrag} €`;
+  el.classList.toggle("negativ", betrag < 0);
 }
 
 
+// Gesamtüberschuss berechnen
 function berechneGesamtUeberschuss(zeitraumStart, zeitraumEnde) {
-  const eintraege = JSON.parse(localStorage.getItem("eintraege")) || [];
+  const einmalige = JSON.parse(localStorage.getItem("eintraege")) || [];
   const wiederkehrende = JSON.parse(localStorage.getItem("wiederkehrendeEintraege")) || [];
-
-  // Helper zum Konvertieren von Datum
   const toDate = (str) => new Date(str + "T00:00:00");
 
-  // 1. Einmalige Einträge im Zeitraum
-  const relevanteEintraege = eintraege.filter(e => {
-    const d = toDate(e.datum);
-    return d >= zeitraumStart && d <= zeitraumEnde;
-  });
+  const relevanteEintraege = [
+    ...einmalige.filter(e => {
+      const d = toDate(e.datum);
+      return d >= zeitraumStart && d <= zeitraumEnde;
+    })
+  ];
 
-  // 2. Wiederkehrende Einträge im Zeitraum simulieren
+  // Wiederkehrende berücksichtigen
   wiederkehrende.forEach(e => {
     const start = toDate(e.start);
     const ende = toDate(e.ende);
-    const typ = e.typ;
     const betrag = parseFloat(e.betrag);
-    const kategorie = e.kategorie;
-    const intervall = e.intervall;
 
-    let lauf = new Date(start);
-    while (lauf <= ende && lauf <= zeitraumEnde) {
-      if (lauf >= zeitraumStart) {
-        let passt = false;
-        switch (intervall) {
-          case "Monatsanfang":
-            passt = lauf.getDate() === 1;
-            break;
-          case "Monatsende":
-            const letzterTag = new Date(lauf.getFullYear(), lauf.getMonth() + 1, 0).getDate();
-            passt = lauf.getDate() === letzterTag;
-            break;
-          case "Wochenanfang":
-            passt = lauf.getDay() === 1;
-            break; // Montag
-          case "Wochenende":
-            passt = lauf.getDay() === 0 || lauf.getDay() === 6;
-            break; // Sonntag oder Samstag
-          case "Jahresanfang":
-            passt = lauf.getDate() === 1 && lauf.getMonth() === 0;
-            break;
-          case "Jahresende":
-            passt = lauf.getDate() === 31 && lauf.getMonth() === 11;
-            break;
-        }
-
-        if (passt) {
-          relevanteEintraege.push({
-            typ,
-            betrag,
-            kategorie,
-            datum: lauf.toISOString().split("T")[0]
-          });
-        }
+    let lauf = new Date(zeitraumStart);
+    while (lauf <= zeitraumEnde) {
+      if (lauf >= start && lauf <= ende && istIntervallFuerDatum(e.intervall, lauf)) {
+        relevanteEintraege.push({
+          typ: e.typ,
+          betrag,
+          kategorie: e.kategorie,
+          datum: lauf.toISOString().split("T")[0]
+        });
       }
-
-      // Weiterzählen → max. täglich prüfen
       lauf.setDate(lauf.getDate() + 1);
     }
   });
 
-  // 3. Summieren nach Typ
+  // Summen berechnen
   let einnahmen = 0, ausgaben = 0, investitionen = 0;
-
   relevanteEintraege.forEach(e => {
     const betrag = parseFloat(e.betrag);
     if (e.typ === "einnahme") einnahmen += betrag;
@@ -775,15 +771,51 @@ function berechneGesamtUeberschuss(zeitraumStart, zeitraumEnde) {
     else if (e.typ === "investition") investitionen += betrag;
   });
 
-  const ueberschuss = einnahmen - ausgaben - investitionen;
-
   return {
     einnahmen,
     ausgaben,
     investitionen,
-    ueberschuss
+    ueberschuss: einnahmen - ausgaben - investitionen
   };
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  let statistikDatum = new Date();
+  let statistikModus = "monat";
+
+  const updateAnzeige = () => {
+    const { start, end } = berechneZeitraum(statistikModus, statistikDatum);
+    berechneUndZeigeUeberschuss(start, end, statistikModus);
+  };
+
+  // Buttons (Woche/Monat/Jahr)
+  document.querySelectorAll('.zeitraum-button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.zeitraum-button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      statistikModus = btn.getAttribute('data-modus');
+      updateAnzeige();
+    });
+  });
+
+  // Navigation (vor/zurück)
+  document.getElementById("zeitraum-zurueck").addEventListener("click", () => {
+    if (statistikModus === "jahr") statistikDatum.setFullYear(statistikDatum.getFullYear() - 1);
+    else if (statistikModus === "monat") statistikDatum.setMonth(statistikDatum.getMonth() - 1);
+    else statistikDatum.setDate(statistikDatum.getDate() - 7);
+    updateAnzeige();
+  });
+
+  document.getElementById("zeitraum-vor").addEventListener("click", () => {
+    if (statistikModus === "jahr") statistikDatum.setFullYear(statistikDatum.getFullYear() + 1);
+    else if (statistikModus === "monat") statistikDatum.setMonth(statistikDatum.getMonth() + 1);
+    else statistikDatum.setDate(statistikDatum.getDate() + 7);
+    updateAnzeige();
+  });
+
+  updateAnzeige();
+});
+
 
 
 </script>
