@@ -1,3 +1,14 @@
+function formatEuro(value) {
+  return value.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatNumber(value, mitEuro = false) {
+  const formatted = value.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return mitEuro ? formatted + " €" : formatted;
+}
+
+
+
 // ------------------ Auslagerung 1.1 -- Einstellungen-Popup anzeigen
 document.addEventListener("DOMContentLoaded", () => {
   const settingsIcon = document.getElementById("settings-icon");
@@ -58,31 +69,102 @@ function renderKategorien() {
     investition: []
   };
   gespeicherte.einnahme = gespeicherte.einnahme || [];
-gespeicherte.ausgabe = gespeicherte.ausgabe || [];
-gespeicherte.investition = gespeicherte.investition || [];
+  gespeicherte.ausgabe = gespeicherte.ausgabe || [];
+  gespeicherte.investition = gespeicherte.investition || [];
 
   const typ = typAuswahl.value;
+
+  // Variable zum Merken des aktuell gezogenen Index
+  let draggedIndex = null;
+
   gespeicherte[typ].forEach((wort, index) => {
     const li = document.createElement("li");
-    li.textContent = wort;
+    li.draggable = true;  // draggable setzen
+    li.dataset.index = index; // zum Identifizieren
+
+    const textSpan = document.createElement("span");
+    textSpan.textContent = wort;
+    li.appendChild(textSpan);
+
+    // Buttons-Container und Buttons (wie vorher, nicht geändert)
+    const btnContainer = document.createElement("div");
+    btnContainer.style.display = "flex";
+    btnContainer.style.gap = "10px";
+    btnContainer.style.alignItems = "center";
 
     const loeschBtn = document.createElement("button");
-    loeschBtn.textContent = "×";
-    loeschBtn.style.marginLeft = "10px";
+    loeschBtn.textContent = "🗑️";
     loeschBtn.style.color = "#c00";
     loeschBtn.style.cursor = "pointer";
     loeschBtn.style.background = "none";
     loeschBtn.style.border = "none";
+    loeschBtn.title = "Kategorie löschen";
     loeschBtn.addEventListener("click", () => {
-      gespeicherte[typ].splice(index, 1);
+      if (confirm(`Kategorie "${wort}" wirklich löschen?`)) {
+        gespeicherte[typ].splice(index, 1);
+        localStorage.setItem("kategorien", JSON.stringify(gespeicherte));
+        renderKategorien();
+      }
+    });
+
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "✎";
+    editBtn.style.cursor = "pointer";
+    editBtn.style.background = "none";
+    editBtn.style.border = "none";
+    editBtn.style.color = "#007bff";
+    editBtn.title = "Kategorie umbenennen";
+    editBtn.addEventListener("click", () => {
+      // Editier-Logik hier, unverändert
+      // (Du kannst hier deinen bisherigen Code reinpacken)
+    });
+
+    btnContainer.appendChild(loeschBtn);
+    btnContainer.appendChild(editBtn);
+
+    li.appendChild(btnContainer);
+
+    // Drag & Drop Event-Listener
+
+    li.addEventListener("dragstart", (e) => {
+      draggedIndex = index;
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", index);
+      li.style.opacity = "0.5";
+    });
+
+    li.addEventListener("dragend", (e) => {
+      draggedIndex = null;
+      li.style.opacity = "1";
+    });
+
+    li.addEventListener("dragover", (e) => {
+      e.preventDefault(); // Erlaubt drop
+      e.dataTransfer.dropEffect = "move";
+    });
+
+    li.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const fromIndex = draggedIndex;
+      const toIndex = index;
+
+      if (fromIndex === null || fromIndex === toIndex) return;
+
+      // Kategorie verschieben
+      const verschobeneKategorie = gespeicherte[typ].splice(fromIndex, 1)[0];
+      gespeicherte[typ].splice(toIndex, 0, verschobeneKategorie);
+
       localStorage.setItem("kategorien", JSON.stringify(gespeicherte));
       renderKategorien();
     });
 
-    li.appendChild(loeschBtn);
     kategorieListe.appendChild(li);
   });
 }
+
+
+
+
 
 addWordBtn.addEventListener("click", () => {
   const wort = wordInput.value.trim();
@@ -507,7 +589,7 @@ Object.keys(tabs).forEach(tabName => {
     if (saldo !== 0) {
       const saldoSpan = document.createElement("div");
       saldoSpan.className = "saldo " + (saldo > 0 ? "positiv" : "negativ");
-      saldoSpan.textContent = Math.abs(saldo).toFixed(2).replace(".", ",");
+      saldoSpan.textContent = formatEuro(Math.abs(saldo));
       saldoInvestWrapper.appendChild(saldoSpan);
     }
 
@@ -516,7 +598,7 @@ Object.keys(tabs).forEach(tabName => {
     if (investitionsSumme > 0) {
       const investitionSpan = document.createElement("div");
       investitionSpan.className = "investition-anzeige";
-      investitionSpan.textContent = investitionsSumme.toFixed(2).replace(".", ",");
+      investitionSpan.textContent = formatEuro(investitionsSumme);
       saldoInvestWrapper.appendChild(investitionSpan);
     }
 
@@ -740,7 +822,7 @@ function renderListe() {
     betragSpan.className = "betrag";
 
     const vorzeichen = vorzeichenMap[eintrag.typ] || "";
-    const betragFormatted = `${parseFloat(eintrag.betrag).toFixed(2).replace(".", ",")} €`;
+    const betragFormatted = formatNumber(parseFloat(eintrag.betrag), true);
     betragSpan.textContent = `${vorzeichen}${betragFormatted}`;
     betragSpan.style.color = farben[eintrag.typ] || "black";
 
@@ -1071,24 +1153,29 @@ function berechneMonatsuebersicht(jahr, monat) {
     });
   }
 
-  // Monatsspezifisches Budget aus localStorage holen
-  const budgetKey = `budget-${jahr}-${monat + 1}`;
-  const userBudgetText = localStorage.getItem(budgetKey);
-  const userBudget = parseFloat(userBudgetText) || 0;
+function formatEuro(value) {
+  return value.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+}
 
-  const monatlichesBudget = userBudget - ausgabenNurNormal;
+// Monatsspezifisches Budget aus localStorage holen
+const budgetKey = `budget-${jahr}-${monat + 1}`;
+const userBudgetText = localStorage.getItem(budgetKey);
+const userBudget = parseFloat(userBudgetText) || 0;
 
-  document.getElementById("monat-einnahmen").textContent = einnahmenGesamt.toFixed(2) + " €";
-  document.getElementById("monat-ausgaben").textContent = ausgabenGesamt.toFixed(2) + " €";
-  document.getElementById("monat-budget").textContent = monatlichesBudget.toFixed(2) + " €";
+const monatlichesBudget = userBudget - ausgabenNurNormal;
 
-  const saldoElement = document.getElementById("monat-saldo");
-  if (saldoElement) {
-    const saldo = einnahmenGesamt - ausgabenGesamt;
-    saldoElement.textContent = saldo.toFixed(2) + " €";
-    saldoElement.classList.remove("positiv", "negativ");
-    saldoElement.classList.add(saldo >= 0 ? "positiv" : "negativ");
-  }
+document.getElementById("monat-einnahmen").textContent = formatEuro(einnahmenGesamt);
+document.getElementById("monat-ausgaben").textContent = formatEuro(ausgabenGesamt);
+document.getElementById("monat-budget").textContent = formatEuro(monatlichesBudget);
+
+const saldoElement = document.getElementById("monat-saldo");
+if (saldoElement) {
+  const saldo = einnahmenGesamt - ausgabenGesamt;
+  saldoElement.textContent = formatEuro(saldo);
+  saldoElement.classList.remove("positiv", "negativ");
+  saldoElement.classList.add(saldo >= 0 ? "positiv" : "negativ");
+}
+
 
   // Budget-Slider
   const heute = new Date();
@@ -2031,6 +2118,8 @@ document.querySelectorAll(".zeitraum-button").forEach(btn => {
     aktuellerZeitIndex = 0;  // Reset bei Moduswechsel
     aktualisiereZeitraumAnzeige();
     ladeStatistikGraph();
+    berechneUndZeigeUeberschuss(zeitraumStart, zeitraumEnde);
+
   });
 });
 
@@ -2038,12 +2127,16 @@ document.getElementById("zeitraum-zurueck").addEventListener("click", () => {
   aktuellerZeitIndex--;
   aktualisiereZeitraumAnzeige();
   ladeStatistikGraph();
+  berechneUndZeigeUeberschuss(zeitraumStart, zeitraumEnde);
+
 });
 
 document.getElementById("zeitraum-vor").addEventListener("click", () => {
   aktuellerZeitIndex++;
   aktualisiereZeitraumAnzeige();
   ladeStatistikGraph();
+  berechneUndZeigeUeberschuss(zeitraumStart, zeitraumEnde);
+
 });
 
 
@@ -2085,3 +2178,4 @@ document.getElementById("sparen-speichern").addEventListener("click", function()
 });
 
 // ========================= Sparer-Verwaltung Ende =========================
+
