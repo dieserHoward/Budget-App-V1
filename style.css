@@ -1034,61 +1034,71 @@ button[type="submit"]:hover {
   display: none;
   justify-content: center;
   align-items: center;
-  z-index: 10000;
+  z-index: 1000;
 }
 
 /* Popup */
+/* Popup */
 #popup2 {
   background: #fff;
-  padding: 30px 25px;
-  border-radius: 12px;
-  max-width: 400px;
+  padding: 25px;
+  border-radius: 14px;
+  max-width: 420px;
   width: 90%;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
   position: relative;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
   color: #333;
 }
 
-
-#popup2-close {
-        position: absolute;
-        top: 22px; right: 10px;
-        font-size: 1.5rem;
-        cursor: pointer;
-        border: none;
-        background: transparent;
-      }
-#popup2-close:hover {
-        color: #007bff;
-      } 
-
-
-
-/* Optional: etwas Abstand nach unten für Überschrift, falls zu eng */
+/* Titel */
 #popup2 h2 {
-  margin-top: 0;
-  margin-bottom: 1rem;
+  margin: 0 0 1.5rem;
+  font-size: 1.4rem;
+  font-weight: 600;
+  text-align: center;
 }
 
-
-
-
-#popup2 button:not(#popup2-close) {
-  width: 100%;
-  padding: 10px 0;
-  margin-top: 15px;
-  border: none;
-  border-radius: 8px;
-  background-color: #007bff;
-  color: white;
-  font-size: 1rem;
+/* Einstellungskarten */
+.setting-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #f9f9f9;
+  margin-bottom: 12px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background 0.2s ease, transform 0.15s ease;
+  border: 1px solid #eee;
 }
 
-#popup2 button:not(#popup2-close):hover {
-  background-color: #0056b3;
+.setting-option:hover {
+  background: #f1f1f1;
+  transform: translateY(-2px);
+}
+
+.setting-option i {
+  font-size: 1.3rem;
+  color: #555;
+}
+
+.setting-option span {
+  font-size: 1rem;
+}
+
+/* Close Button */
+#popup2-close {
+  position: absolute;
+  top: 15px; right: 15px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  color: #777;
+}
+#popup2-close:hover {
+  color: #000;
 }
 
 
