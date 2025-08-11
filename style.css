@@ -2699,3 +2699,187 @@ body {
   background-color: white;
 }
 /* ===== Notch ist nicht durchsichtig Ende ===== */
+
+
+/* ====================== Notizen-Tab Start ====================== */
+ #tab-content-notizen {
+    font-family: "Segoe UI", sans-serif;
+    color: #333;
+}
+
+/* Fixierter Header (falls nötig) */
+#fixed-container-notizen {
+    position: sticky;
+    top: 0;
+    background: #f9fafb;
+    padding: 12px 0;
+    border-bottom: 1px solid #e5e7eb;
+    z-index: 10;
+}
+
+/* Scrollbereich */
+#scroll-content-notizen {
+    padding: 16px;
+    background: #f3f4f6;
+    height: 100%;
+    min-height: unset; /* verhindert Überlaufen */
+    box-sizing: border-box;
+}
+
+/* Notizfeld */
+#notizen-textarea {
+    width: 100%;
+    height: 200px;
+    padding: 12px;
+    font-size: 15px;
+    font-family: monospace;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    resize: vertical;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    background: white;
+}
+
+/* Schulden-Tracker Eingaben */
+#schuld-inputs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+#schuld-inputs input {
+    padding: 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    height: 38px;
+    line-height: 1.4;
+    box-sizing: border-box;
+}
+
+/* Einheitliche Optik für type="number" */
+#schuld-inputs input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+    margin-top: -0px
+}
+#schuld-inputs input[type="number"]::-webkit-outer-spin-button,
+#schuld-inputs input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Plus-Button */
+#schuld-inputs button {
+    padding: 8px 12px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+    height: 38px;
+}
+#schuld-inputs button:hover {
+    background-color: #43a047;
+}
+
+/* Einzellisten-Eintrag */
+.schuld-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 10px 14px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    font-size: 15px;
+}
+
+/* Buttons in der Liste */
+.schuld-item button {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+/* Gesamtsumme */
+#schuld-summe {
+    margin-top: 10px;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+/* ===== Modal Styles ===== */
+#schuld-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+#schuld-modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    animation: fadeIn 0.25s ease-out;
+}
+
+#schuld-modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 18px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+}
+
+.schuld-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.schuld-detail-row:last-child {
+    border-bottom: none;
+}
+
+.schuld-detail-row span {
+    font-size: 14px;
+}
+
+.schuld-detail-row button {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+/* Modal schließen-Button */
+#schuld-modal-close {
+    background: #e5e7eb;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 14px;
+    float: right;
+    transition: background 0.2s;
+}
+#schuld-modal-close:hover {
+    background: #d1d5db;
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
