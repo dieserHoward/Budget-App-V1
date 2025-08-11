@@ -832,7 +832,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 </div>
-  
+
 <!-- ======================================= Statistik-Tab Ende ======================================= -->
 
 <!-- ======================================= Übersicht-Tab Start ======================================= -->
@@ -1202,10 +1202,229 @@ const renderListe = (zielId, daten, typ) => {
 
 
 </script>
-
+</div>
 
 <!-- ======================================= Übersicht-Tab Ende ======================================= -->
 
+
+<!-- ======================================= Notizen-Tab ======================================= -->
+<div id="tab-content-notizen" style="display: none;">
+
+    <!-- Fixierter Titel -->
+    
+
+    <!-- Scrollbarer Inhalt -->
+    <div id="scroll-content-notizen">
+
+        <!-- Notizfeld -->
+        <label for="notizen-textarea" style="font-weight: 600; display:block; margin-bottom: 6px;">Notizen</label>
+        <textarea id="notizen-textarea" placeholder="Hier schreiben... (z.B. 2+3=)"></textarea>
+
+        <hr style="margin: 24px 0; border: none; border-top: 1px solid #e5e7eb;">
+
+        <!-- Schulden-Tracker -->
+        <h4 style="margin-bottom: 8px;">Schulden-Tracker</h4>
+        <div id="schuld-inputs">
+            <input id="schuld-name" type="text" placeholder="Name" style="flex: 2;">
+            <input id="schuld-betrag" type="number" step="0.01" placeholder="Betrag" style="flex: 1;">
+            <button id="schuld-add">➕</button>
+        </div>
+        <div id="schuld-liste" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        <div id="schuld-summe"></div>
+
+        <div id="schuld-modal">
+    <div id="schuld-modal-content">
+        <h3 id="schuld-modal-title">Details</h3>
+        <div id="schuld-modal-list"></div>
+        <button id="schuld-modal-close">Schließen</button>
+    </div>
+</div>
+
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    /* === Notizen-Funktion === */
+    const textarea = document.getElementById("notizen-textarea");
+    textarea.value = localStorage.getItem("notizenText") || "";
+
+    textarea.addEventListener("input", () => {
+        localStorage.setItem("notizenText", textarea.value);
+    });
+
+    textarea.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            const cursorPos = textarea.selectionStart;
+            const text = textarea.value;
+            const lines = text.split("\n");
+            let currentLineIndex = 0, charCount = 0;
+            for (let i = 0; i < lines.length; i++) {
+                charCount += lines[i].length + 1;
+                if (cursorPos <= charCount) { currentLineIndex = i; break; }
+            }
+            let line = lines[currentLineIndex].trim();
+            if (line.includes("=")) {
+                try {
+                    const expression = line.replace("=", "").trim();
+                    const result = eval(expression);
+                    lines[currentLineIndex] = `${expression} = ${result}`;
+                    textarea.value = lines.join("\n");
+                    localStorage.setItem("notizenText", textarea.value);
+                    const newPos = lines.slice(0, currentLineIndex + 1).join("\n").length;
+                    textarea.setSelectionRange(newPos, newPos);
+                    e.preventDefault();
+                } catch {}
+            }
+        }
+    });
+
+    /* === Schulden-Tracker === */
+    const schuldName = document.getElementById("schuld-name");
+    const schuldBetrag = document.getElementById("schuld-betrag");
+    const schuldAdd = document.getElementById("schuld-add");
+    const schuldListe = document.getElementById("schuld-liste");
+    const schuldSumme = document.getElementById("schuld-summe");
+
+    function ladeSchulden() {
+    const schulden = JSON.parse(localStorage.getItem("schulden") || "[]");
+
+    // Summieren + Details speichern
+    const zusammenfassung = {};
+    schulden.forEach(({ name, betrag, datum }) => {
+        if (!zusammenfassung[name]) zusammenfassung[name] = { summe: 0, eintraege: [] };
+        zusammenfassung[name].summe += parseFloat(betrag);
+        zusammenfassung[name].eintraege.push({ betrag: parseFloat(betrag), datum });
+    });
+
+    schuldListe.innerHTML = "";
+    let summe = 0;
+
+    Object.entries(zusammenfassung).forEach(([name, data]) => {
+        summe += data.summe;
+
+        const row = document.createElement("div");
+        row.className = "schuld-item";
+
+        const text = document.createElement("span");
+        text.textContent = `${name}: ${data.summe.toFixed(2)} €`;
+
+        const btnContainer = document.createElement("div");
+        btnContainer.style.display = "flex";
+        btnContainer.style.gap = "6px";
+
+        // Info-Button → Modal öffnen
+        const infoBtn = document.createElement("button");
+        infoBtn.textContent = "ℹ️";
+        infoBtn.title = "Details anzeigen";
+        infoBtn.addEventListener("click", () => {
+            const modal = document.getElementById("schuld-modal");
+            const modalTitle = document.getElementById("schuld-modal-title");
+            const modalList = document.getElementById("schuld-modal-list");
+
+            modalTitle.textContent = `Details für ${name}`;
+            modalList.innerHTML = "";
+
+            data.eintraege.forEach((e, i) => {
+                const detailRow = document.createElement("div");
+                detailRow.className = "schuld-detail-row";
+
+                const detailText = document.createElement("span");
+                detailText.textContent = `${e.betrag.toFixed(2)} € am ${e.datum}`;
+
+                const deleteBtn = document.createElement("button");
+                deleteBtn.textContent = "🗑️";
+                deleteBtn.addEventListener("click", () => {
+                    const alle = JSON.parse(localStorage.getItem("schulden") || "[]");
+                    alle.splice(alle.findIndex(item =>
+                        item.name === name &&
+                        item.betrag === e.betrag &&
+                        item.datum === e.datum
+                    ), 1);
+                    localStorage.setItem("schulden", JSON.stringify(alle));
+                    ladeSchulden();
+                    modal.style.display = "none";
+                });
+
+                detailRow.appendChild(detailText);
+                detailRow.appendChild(deleteBtn);
+                modalList.appendChild(detailRow);
+            });
+
+            modal.style.display = "flex";
+        });
+
+        // Löschen-Button
+        const del = document.createElement("button");
+        del.textContent = "🗑️";
+        del.title = "Alle Einträge löschen";
+        del.addEventListener("click", () => {
+            const neu = schulden.filter(e => e.name !== name);
+            localStorage.setItem("schulden", JSON.stringify(neu));
+            ladeSchulden();
+        });
+
+        btnContainer.appendChild(infoBtn);
+        btnContainer.appendChild(del);
+
+        row.appendChild(text);
+        row.appendChild(btnContainer);
+        schuldListe.appendChild(row);
+    });
+
+    schuldSumme.textContent = `Gesamt: ${summe.toFixed(2)} €`;
+    schuldSumme.style.color = summe >= 0 ? "green" : "red";
+}
+
+// Modal schließen
+document.getElementById("schuld-modal-close").addEventListener("click", () => {
+    document.getElementById("schuld-modal").style.display = "none";
+});
+document.getElementById("schuld-modal").addEventListener("click", (e) => {
+    if (e.target.id === "schuld-modal") {
+        document.getElementById("schuld-modal").style.display = "none";
+    }
+});
+
+// Beim Hinzufügen das Datum speichern
+schuldAdd.addEventListener("click", () => {
+    const name = schuldName.value.trim();
+    const betrag = parseFloat(schuldBetrag.value);
+    if (!name || isNaN(betrag)) return;
+    const schulden = JSON.parse(localStorage.getItem("schulden") || "[]");
+    const datum = new Date().toLocaleDateString();
+    schulden.push({ name, betrag, datum });
+    localStorage.setItem("schulden", JSON.stringify(schulden));
+    schuldName.value = "";
+    schuldBetrag.value = "";
+    ladeSchulden();
+});
+
+
+    ladeSchulden();
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    const tabButtons = document.querySelectorAll(".tab-button");
+    const tabContents = document.querySelectorAll("#tab-content > div");
+
+    tabButtons.forEach(button => {
+        button.addEventListener("click", () => {
+            // Alle Buttons und Inhalte zurücksetzen
+            tabButtons.forEach(b => b.classList.remove("active"));
+            tabContents.forEach(c => c.style.display = "none");
+
+            // Aktiven Button markieren
+            button.classList.add("active");
+
+            // Passenden Content anzeigen
+            const tabId = button.id.replace("tab-", "tab-content-");
+            document.getElementById(tabId).style.display = "block";
+        });
+    });
+});
+</script>
+<!-- ======================================= Notizen-Tab Ende ======================================= -->
 
 
   <!-- ================= PLUS-BUTTON & Formular für Eintrag ================= -->
