@@ -2997,3 +2997,132 @@ body {
 
 
 /* ====================== Einstellungen: Daten exportieren Ende ====================== */
+
+
+
+/* ====================== Budget freigeben Start ====================== */
+/* Button "..." schöner gestalten */
+#ruecklagen-button {
+  background: none;
+  border: 1px solid #888;       /* helles Grau */
+  color: #666;                  /* weiches Dunkelgrau */
+  font-weight: normal;
+  font-size: 18px;
+  padding: 3px 10px;
+  border-radius: 4px;           /* leicht abgerundet */
+  cursor: pointer;
+  user-select: none;
+  min-width: 36px;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+#ruecklagen-button:hover {
+  color: #444;                 /* etwas dunkler beim Hover */
+  border-color: #444;
+}
+
+#ruecklagen-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(100, 100, 100, 0.3);
+}
+
+/* Popup-Styling */
+#ruecklagen-popup {
+  display: none;
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px 30px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+  z-index: 1000;
+  width: 350px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  box-sizing: border-box;
+}
+
+#ruecklagen-popup h4 {
+  color: #000; /* Schwarz statt Blau */
+  margin-bottom: 20px;
+  font-weight: bold;
+  font-size: 1.2em;
+  text-align: center; /* Überschrift mittig */
+}
+
+#ruecklagen-popup label {
+  display: block;
+  margin-bottom: -20px;  /* Abstand zwischen den Feldern */
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+
+#ruecklagen-popup input[type="number"] {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1.8px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+  box-sizing: border-box;
+}
+
+#ruecklagen-popup input[type="number"]:focus {
+  border-color: #007BFF;
+  outline: none;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.6);
+}
+
+/* Container für Buttons - zentriert mit Abstand */
+#ruecklagen-popup .button-container {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 25px;
+}
+
+/* Buttons im Popup */
+#popup-save, #popup-cancel {
+  padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+  min-width: 100px;
+  box-sizing: border-box;
+}
+
+#popup-save {
+  background-color: #28a745;
+  color: white;
+}
+
+#popup-save:hover {
+  background-color: #218838;
+}
+
+#popup-cancel {
+  background-color: #dc3545;
+  color: white;
+}
+
+#popup-cancel:hover {
+  background-color: #c82333;
+}
+
+/* Overlay für Popup-Hintergrund */
+#popup-overlay {
+  display: none;
+  position: fixed;
+  top:0; left:0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.35);
+  z-index: 999;
+  backdrop-filter: blur(2px);
+}
+
+/* ======================= Budget freigeben Ende ====================== */
