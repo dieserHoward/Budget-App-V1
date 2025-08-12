@@ -3165,6 +3165,6 @@ body {
 @media (max-width: 768px) {
   #ausgaben-line-chart,
   #ausgaben-pie-chart {
-    height: 500px !important; /* Auf Handys höher machen */
+    height: 10000px !important; /* Auf Handys höher machen */
   }
 }
