@@ -3155,3 +3155,16 @@ body {
 #ausgabenFilter:hover {
   background-color: #ececec;
 }
+
+#ausgaben-line-chart,
+#ausgaben-pie-chart {
+  width: 100% !important;
+  height: 350px !important; /* Standardhöhe am Desktop */
+}
+
+@media (max-width: 768px) {
+  #ausgaben-line-chart,
+  #ausgaben-pie-chart {
+    height: 500px !important; /* Auf Handys höher machen */
+  }
+}
