@@ -15,7 +15,6 @@
 
 
 <!---========================= HIER HTML ===========================-->
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -24,6 +23,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
+
+
 
 
   <title>Budget Manager</title>
@@ -725,15 +731,14 @@ items.forEach(item => {
     const pos = parseInt(item.getAttribute('data-pos'));
     underline.style.left = (pos * 33.3333) + '%';
 
-    // Sichtbarkeit der Chart-Sektionen steuern
     chartSections[aktiverChartIndex].style.display = 'none';
     chartSections[pos].style.display = 'block';
     aktiverChartIndex = pos;
 
-    // Optional: Daten für den neuen Graphen laden
-    ladeStatistikGraph();
+    ladeStatistikGraph(); // Daten & Chart neu laden
   });
 });
+
 });
 
 // Aus Übersicht-Tab übernehmen
@@ -792,7 +797,21 @@ function berechneZeitraum(modus, basisDatum) {
 </div>
 
 </div>  
-  <div id="chart-ausgaben" class="chart-section" style="display: none;">📉 Graph für Ausgaben</div>
+<div id="chart-ausgaben" class="chart-section" style="display: none;">
+  
+  <canvas id="ausgaben-pie-chart" width="700" height="300" style="border:none; border-radius:6px;"></canvas>
+
+  <select id="ausgabenFilter">
+    <option value="alle">Alle</option>
+    <option value="einmalig" selected>Einmalige</option>
+    <option value="wiederkehrend">Wiederkehrende</option>
+  </select>
+
+  <canvas id="ausgaben-line-chart" width="800" height="400"></canvas>
+</div>
+
+
+</div>
 </div>
 
 
@@ -819,13 +838,17 @@ function berechneZeitraum(modus, basisDatum) {
 
 
 <!-- Halbtransparenter Hintergrund -->
-<div id="popup-overlay" style="display:none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.3); z-index:999;"></div>
+
+
+<div id="popup-overlay23" style="display:none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.3); z-index:999;"></div>
 
 <script>
+
+
   document.getElementById('ruecklagen-button').addEventListener('click', () => {
   // Popup und Overlay anzeigen
   document.getElementById('ruecklagen-popup').style.display = 'block';
-  document.getElementById('popup-overlay').style.display = 'block';
+  document.getElementById('popup-overlay23').style.display = 'block';
 
   // Werte aus localStorage laden (falls vorhanden)
   const freigabe = JSON.parse(localStorage.getItem('ruecklagenFreigabe')) || { kurz:0, urlaub:0, lang:0 };
@@ -837,7 +860,7 @@ function berechneZeitraum(modus, basisDatum) {
 document.getElementById('popup-cancel').addEventListener('click', () => {
   // Popup und Overlay schließen
   document.getElementById('ruecklagen-popup').style.display = 'none';
-  document.getElementById('popup-overlay').style.display = 'none';
+  document.getElementById('popup-overlay23').style.display = 'none';
 });
 
 document.getElementById('popup-save').addEventListener('click', () => {
@@ -851,16 +874,16 @@ document.getElementById('popup-save').addEventListener('click', () => {
 
   // Popup und Overlay schließen
   document.getElementById('ruecklagen-popup').style.display = 'none';
-  document.getElementById('popup-overlay').style.display = 'none';
+  document.getElementById('popup-overlay23').style.display = 'none';
 
   // Anzeige aktualisieren (z.B. Überschuss neu berechnen)
   updateAnzeige();
 });
 
 // Popup schließen, wenn außerhalb des Popups geklickt wird
-document.getElementById('popup-overlay').addEventListener('click', () => {
+document.getElementById('popup-overlay23').addEventListener('click', () => {
   document.getElementById('ruecklagen-popup').style.display = 'none';
-  document.getElementById('popup-overlay').style.display = 'none';
+  document.getElementById('popup-overlay23').style.display = 'none';
 });
 
 </script>
@@ -992,10 +1015,10 @@ document.addEventListener("DOMContentLoaded", () => {
   let statistikDatum = new Date();
   let statistikModus = "monat";
 
-  const updateAnzeige = () => {
-    const { start, end } = berechneZeitraum(statistikModus, statistikDatum);
-    berechneUndZeigeUeberschuss(start, end, statistikModus);
-  };
+  const { start, end } = berechneZeitraum(statistikModus, statistikDatum);
+berechneUndZeigeUeberschuss(start, end, statistikModus);
+zeichneAusgabenKuchen(start, end); // <-- Hier ergänzen
+
 
   // Buttons (Woche/Monat/Jahr)
   document.querySelectorAll('.zeitraum-button').forEach(btn => {
@@ -1028,6 +1051,423 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 </script>
+
+
+<!-- Ausgaben Graph Statistik-->
+<script>
+function istSortierModusAktiv() {
+  return localStorage.getItem("sortierModusAktiv") === "true";
+}
+function findeOberkategorie(kategorie, hauptKategorie) {
+  const gruppen = JSON.parse(localStorage.getItem("kategorieGruppen")) || {
+    einnahme: [],
+    ausgabe: [],
+    investition: []
+  };
+
+  const oberKategorien = gruppen[hauptKategorie] || [];
+
+  for (const gruppe of oberKategorien) {
+    if (gruppe.items.includes(kategorie)) {
+      return gruppe.name;
+    }
+  }
+
+  // Wenn keine Oberkategorie gefunden, gib die Kategorie selbst zurück oder "Sonstiges"
+  return "Sonstiges";
+}
+
+
+
+function ladeAusgabenNachKategorie(start, ende) {
+  const eintraege = JSON.parse(localStorage.getItem("eintraege")) || [];
+  const wiederkehrende = JSON.parse(localStorage.getItem("wiederkehrendeEintraege")) || [];
+
+  const toDate = (str) => new Date(str + "T00:00:00");
+
+  let alleAusgaben = [];
+
+  // Einmalige Ausgaben filtern
+  alleAusgaben = eintraege.filter(e => {
+    if (e.typ !== "ausgabe") return false;
+    const d = toDate(e.datum);
+    return d >= start && d <= ende;
+  });
+
+  // Wiederkehrende Ausgaben ergänzen
+  wiederkehrende.forEach(e => {
+    if (e.typ !== "ausgabe") return;
+    const startW = toDate(e.start);
+    const endeW = toDate(e.ende);
+    let lauf = new Date(start);
+    while (lauf <= ende) {
+      if (lauf >= startW && lauf <= endeW && istIntervallFuerDatum(e.intervall, lauf)) {
+        alleAusgaben.push({
+          kategorie: e.kategorie,
+          betrag: parseFloat(e.betrag),
+          datum: lauf.toISOString().split("T")[0]
+        });
+      }
+      lauf.setDate(lauf.getDate() + 1);
+    }
+  });
+
+  const kategorienSumme = {};
+
+  alleAusgaben.forEach(e => {
+    let zielKategorie;
+
+    if (istSortierModusAktiv()) {
+      // Im Sortiermodus die Oberkategorie nehmen
+      zielKategorie = findeOberkategorie(e.kategorie, "ausgabe");
+    } else {
+      // Sonst normale Kategorie
+      zielKategorie = e.kategorie || "Sonstiges";
+    }
+
+    kategorienSumme[zielKategorie] = (kategorienSumme[zielKategorie] || 0) + parseFloat(e.betrag);
+  });
+
+  return kategorienSumme;
+}
+
+
+
+let ausgabenChart = null;
+
+function zeichneAusgabenKuchen(start, ende) {
+  const daten = ladeAusgabenNachKategorie(start, ende);
+
+  // Sortiere Kategorien nach Größe absteigend
+  const sortierteEintraege = Object.entries(daten)
+    .sort((a, b) => b[1] - a[1]); // b[1]-a[1] für absteigend
+
+  const labels = sortierteEintraege.map(e => e[0]);
+  const values = sortierteEintraege.map(e => e[1]);
+
+  const ctx = document.getElementById('ausgaben-pie-chart').getContext('2d');
+
+  if (ausgabenChart) {
+    ausgabenChart.destroy();
+  }
+
+  ausgabenChart = new Chart(ctx, {
+  type: 'pie',
+  data: {
+    labels,
+    datasets: [{
+      data: values,
+      backgroundColor: labels.map(() => '#' + Math.floor(Math.random()*16777215).toString(16)),
+      borderWidth: 1
+    }]
+  },
+  options: {
+    rotation: -0.5 * Math.PI,
+    responsive: true,
+    plugins: {
+      legend: {
+        display: true,          // Legende auf jeden Fall anzeigen
+        position: 'bottom',     // Legende unter dem Chart
+        labels: {
+          boxWidth: 20,
+          padding: 15,
+          font: {
+            size: 14
+          }
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            const label = context.label || '';
+            const value = context.parsed || 0;
+            return `${label}: ${value.toFixed(2)} €`;
+          }
+        }
+      },
+      datalabels: {
+        color: '#fff',
+        font: {
+          weight: 'bold',
+          size: 14
+        },
+        formatter: (value, context) => {
+          const sum = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+          const percent = (value / sum) * 100;
+          return percent > 7 ? percent.toFixed(1) + '%' : '';
+        }
+      }
+    }
+  },
+  plugins: [ChartDataLabels]
+});
+
+
+}
+
+
+
+
+function updateAnzeige() {
+  const { start, end } = berechneZeitraum(statistikModus, statistikDatum);
+
+  // Anzeige Zeitraum aktualisieren (z.B. Juli 2025)
+  const options = { year: 'numeric', month: 'long' };
+  let zeitraumText = '';
+  if (statistikModus === 'monat') {
+    zeitraumText = statistikDatum.toLocaleDateString('de-DE', options);
+  } else if (statistikModus === 'jahr') {
+    zeitraumText = statistikDatum.getFullYear().toString();
+  } else if (statistikModus === 'woche') {
+    const startStr = start.toLocaleDateString('de-DE');
+    const endStr = end.toLocaleDateString('de-DE');
+    zeitraumText = `${startStr} - ${endStr}`;
+  }
+  document.getElementById('zeitraum-anzeige').innerText = zeitraumText;
+
+  berechneUndZeigeUeberschuss(start, end, statistikModus);
+  zeichneAusgabenKuchen(start, end);
+  zeichneAusgabenKumuliert(start, end);
+}
+
+
+</script>
+
+
+<!-- Ausgaben Graph 2 (Verlauf)-->
+<script>
+/* --- Hilfsfunktionen -------------------------------------------------- */
+function hexToRgba(hex, alpha = 1) {
+  // unterstützt #abc und #aabbcc
+  hex = (hex || '#999999').replace('#', '');
+  if (hex.length === 3) hex = hex.split('').map(ch => ch + ch).join('');
+  const num = parseInt(hex, 16);
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+/* --- Data loader (deine vorhandene Funktion, unverändert) ------------- */
+function ladeKumulierteAusgabenNachKategorie(start, ende, filter = "alle") {
+  const eintraege = JSON.parse(localStorage.getItem("eintraege")) || [];
+  const wiederkehrende = JSON.parse(localStorage.getItem("wiederkehrendeEintraege")) || [];
+  const toDate = (str) => new Date(str + "T00:00:00");
+
+  let alleAusgaben = [];
+
+  // Einmalige Ausgaben
+  if (filter === "alle" || filter === "einmalig") {
+    alleAusgaben = eintraege.filter(e => {
+      if (e.typ !== "ausgabe") return false;
+      const d = toDate(e.datum);
+      return d >= start && d <= ende;
+    });
+  }
+
+  // Wiederkehrende Ausgaben
+  if (filter === "alle" || filter === "wiederkehrend") {
+    wiederkehrende.forEach(e => {
+      if (e.typ !== "ausgabe") return;
+      const startW = toDate(e.start);
+      const endeW = toDate(e.ende);
+      let lauf = new Date(start);
+      while (lauf <= ende) {
+        if (lauf >= startW && lauf <= endeW && istIntervallFuerDatum(e.intervall, lauf)) {
+          alleAusgaben.push({
+            kategorie: e.kategorie,
+            betrag: parseFloat(e.betrag),
+            datum: lauf.toISOString().split("T")[0]
+          });
+        }
+        lauf.setDate(lauf.getDate() + 1);
+      }
+    });
+  }
+
+  // Tage im Zeitraum
+  const tage = [];
+  for (let d = new Date(start); d <= ende; d.setDate(d.getDate() + 1)) {
+    tage.push(d.toISOString().split("T")[0]);
+  }
+
+  // Kategorien (ggf. Oberkategorie)
+  let kategorienSet = new Set();
+  alleAusgaben.forEach(e => {
+    let zielKategorie;
+    if (typeof istSortierModusAktiv === 'function' && istSortierModusAktiv()) {
+      zielKategorie = typeof findeOberkategorie === 'function' ? findeOberkategorie(e.kategorie, "ausgabe") : (e.kategorie || "Sonstiges");
+    } else {
+      zielKategorie = e.kategorie || "Sonstiges";
+    }
+    e.zielKategorie = zielKategorie;
+    kategorienSet.add(zielKategorie);
+  });
+  const kategorien = Array.from(kategorienSet);
+
+  // Daten pro Tag initialisieren
+  const datenProTag = {};
+  tage.forEach(tag => {
+    datenProTag[tag] = { gesamt: 0, kategorien: {} };
+    kategorien.forEach(k => datenProTag[tag].kategorien[k] = 0);
+  });
+
+  // Werte einsortieren
+  alleAusgaben.forEach(e => {
+    if (datenProTag[e.datum]) {
+      datenProTag[e.datum].gesamt += e.betrag;
+      datenProTag[e.datum].kategorien[e.zielKategorie] += e.betrag;
+    }
+  });
+
+  // Kumulieren
+  const kumulativ = { tage: tage, gesamt: [], kategorien: {} };
+  kategorien.forEach(k => kumulativ.kategorien[k] = []);
+  let sumGesamt = 0;
+  const sumKategorien = {};
+  kategorien.forEach(k => sumKategorien[k] = 0);
+
+  tage.forEach(tag => {
+    sumGesamt += datenProTag[tag].gesamt;
+    kumulativ.gesamt.push(sumGesamt);
+    kategorien.forEach(k => {
+      sumKategorien[k] += datenProTag[tag].kategorien[k];
+      kumulativ.kategorien[k].push(sumKategorien[k]);
+    });
+  });
+
+  return kumulativ;
+}
+
+/* --- Chart-Rendering -------------------------------------------------- */
+let ausgabenLineChart = null;
+
+function zeichneAusgabenKumuliert(start, ende, filter = "alle") {
+  const daten = ladeKumulierteAusgabenNachKategorie(start, ende, filter);
+
+  const ctxEl = document.getElementById('ausgaben-line-chart');
+  if (!ctxEl) return;
+  const ctx = ctxEl.getContext('2d');
+
+  if (ausgabenLineChart) ausgabenLineChart.destroy();
+
+  const farbPalette = [
+    '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+    '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
+  ];
+
+  const kategorien = Object.keys(daten.kategorien);
+
+  // Wenn keine Kategorien vorhanden -> Chart leeren
+  if (kategorien.length === 0 && daten.gesamt.length === 0) {
+    // optional: clear canvas / anzeigen "keine Daten"
+    return;
+  }
+
+  // Erzeuge gestapelte Daten (kumulativ pro Kategorie)
+  const gestapelteDaten = {};
+  kategorien.forEach(k => gestapelteDaten[k] = []);
+  for (let i = 0; i < daten.tage.length; i++) {
+    let summeBisJetzt = 0;
+    kategorien.forEach(k => {
+      summeBisJetzt += daten.kategorien[k][i] || 0;
+      gestapelteDaten[k][i] = summeBisJetzt;
+    });
+  }
+
+
+
+const datasets = [];
+const farben = {}; // <-- Definition hier
+
+kategorien.forEach((kategorie, i) => {
+  farben[kategorie] = farbPalette[i % farbPalette.length];
+  datasets.push({
+    label: kategorie,
+    data: daten.kategorien[kategorie], // nur Tageswerte!
+    borderColor: farben[kategorie],
+    backgroundColor: farben[kategorie].replace(')', ', 0.4)').replace('rgb', 'rgba'),
+    borderWidth: 1.5,
+    fill: true,
+    tension: 0.1,
+    stack: 'stack1',
+    pointRadius: 0
+  });
+});
+
+// Schwarze Gesamtkostenlinie (kumuliert)
+datasets.push({
+  label: 'Gesamtausgaben (kumuliert)',
+  data: daten.gesamt,
+  borderColor: '#000000',
+  borderWidth: 3,
+  fill: false,
+  tension: 0.1,
+  pointRadius: 0
+});
+
+
+  ausgabenLineChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: daten.tage,
+      datasets: datasets
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: {
+          type: 'time',
+          time: { unit: 'day', tooltipFormat: 'dd.MM.yyyy', displayFormats: { day: 'dd.MM' } },
+          title: { display: true, text: 'Datum' }
+        },
+        y: {
+          beginAtZero: true,
+          stacked: true,
+          title: { display: true, text: 'Kumulierte Ausgaben (€)' }
+        }
+      },
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          callbacks: {
+            label: ctx => {
+              // ctx.parsed.y kann undefined sein bei nicht-time axes in manchen Chart.js builds
+              const val = (ctx.parsed && ctx.parsed.y !== undefined) ? ctx.parsed.y : ctx.parsed;
+              return `${ctx.dataset.label}: ${Number(val || 0).toFixed(2)} €`;
+            }
+          }
+        }
+      },
+      interaction: { mode: 'nearest', intersect: false }
+    }
+  });
+}
+
+/* --- Initialisierung & Listener (außerhalb der Funktionen) ------------ */
+document.addEventListener('DOMContentLoaded', () => {
+  // Default-Zeitraum: aktueller Monat (du kannst das anpassen)
+  const start = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const ende = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+
+  // Stelle sicher, dass <select id="ausgabenFilter"> im DOM existiert
+  const sel = document.getElementById('ausgabenFilter');
+  const initialFilter = sel ? sel.value || 'einmalig' : 'einmalig';
+
+  // Zeichnen beim Start mit dem voreingestellten Filter (z.B. 'einmalig')
+  zeichneAusgabenKumuliert(start, ende, initialFilter);
+
+  // Listener für Filterwechsel
+  if (sel) {
+    sel.addEventListener('change', (e) => {
+      zeichneAusgabenKumuliert(start, ende, e.target.value);
+    });
+  }
+});
+</script>
+
 
 </div>
 
@@ -1642,8 +2082,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   <!-- ================= PLUS-BUTTON & Formular für Eintrag ================= -->
-<!-- ================= PLUS-BUTTON & Formular für Eintrag ================= -->
- </div>
+<!-- ================= PLUS-BUTTON & Formular für Eintrag ================= --> 
+</div>
 <button id="plus-button">+</button>
 
   <!-- Popup-Overlay hinter plus button-->
@@ -2023,6 +2463,7 @@ if (gespeicherteKategorien) {
 
 </body>
 </html>
+
 
 
 <!---========================= HIER HTML Ende aber ohne Schluss===========================-->
