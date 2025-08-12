@@ -15,6 +15,7 @@
 
 
 <!---========================= HIER HTML ===========================-->
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -849,7 +850,7 @@ function berechneGesamtUeberschuss(zeitraumStart, zeitraumEnde, modus) {
   let relevanteEintraege = [];
 
   if (modus === "jahr") {
-    // 📌 Für EINMALIGE Zahlungen immer das komplette Jahr nehmen
+    // Einmalige Einträge: gesamtes Jahr auswerten
     const jahrStart = new Date(zeitraumStart.getFullYear(), 0, 1);
     const jahrEnde = new Date(zeitraumStart.getFullYear(), 11, 31, 23, 59, 59, 999);
 
@@ -860,7 +861,7 @@ function berechneGesamtUeberschuss(zeitraumStart, zeitraumEnde, modus) {
       })
     );
   } else {
-    // 📌 In Monat/Woche wie bisher
+    // Monat/Woche
     relevanteEintraege.push(
       ...einmalige.filter(e => {
         const d = toDate(e.datum);
@@ -869,27 +870,42 @@ function berechneGesamtUeberschuss(zeitraumStart, zeitraumEnde, modus) {
     );
   }
 
-  // 📌 Wiederkehrende Zahlungen nur bis Zeitraum-Ende
+  // Enddatum für wiederkehrende Einträge ermitteln
+  let endDatumWiederkehrende = zeitraumEnde;
+
+if (modus === "jahr") {
+  const heute = new Date();
+  const ausgewertetesJahr = zeitraumStart.getFullYear();
+
+  if (ausgewertetesJahr === heute.getFullYear()) {
+    // Wenn ausgewertetes Jahr das aktuelle Jahr ist,
+    // dann Enddatum = letzter Tag des aktuellen Monats
+    endDatumWiederkehrende = new Date(heute.getFullYear(), heute.getMonth() + 1, 0, 23, 59, 59, 999);
+  } else {
+    // Sonst komplettes Jahr (31.12.)
+    endDatumWiederkehrende = new Date(ausgewertetesJahr, 11, 31, 23, 59, 59, 999);
+  }
+}
+
+
+  // Wiederkehrende Einträge generieren
   wiederkehrende.forEach(e => {
     const start = toDate(e.start);
     const ende = toDate(e.ende);
     const betrag = parseFloat(e.betrag);
 
     let lauf = new Date(zeitraumStart);
-    while (lauf <= zeitraumEnde) {
-      if (lauf >= start && lauf <= ende && istIntervallFuerDatum(e.intervall, lauf)) {
-        relevanteEintraege.push({
-          typ: e.typ,
-          betrag,
-          kategorie: e.kategorie,
-          datum: lauf.toISOString().split("T")[0]
-        });
-      }
-      lauf.setDate(lauf.getDate() + 1);
-    }
+
+while (lauf <= endDatumWiederkehrende) {
+  if (lauf >= start && lauf <= ende && istIntervallFuerDatum(e.intervall, lauf)) {
+    relevanteEintraege.push({ /*...*/ });
+  }
+  lauf.setDate(lauf.getDate() + 1);
+}
+
   });
 
-  // Summen
+  // Summen berechnen
   let einnahmen = 0, ausgaben = 0, investitionen = 0;
   relevanteEintraege.forEach(e => {
     const betrag = parseFloat(e.betrag);
@@ -905,6 +921,8 @@ function berechneGesamtUeberschuss(zeitraumStart, zeitraumEnde, modus) {
     ueberschuss: einnahmen - ausgaben - investitionen
   };
 }
+
+
 
 
 
@@ -1943,7 +1961,6 @@ if (gespeicherteKategorien) {
 
 </body>
 </html>
-
 
 
 <!---========================= HIER HTML Ende aber ohne Schluss===========================-->
