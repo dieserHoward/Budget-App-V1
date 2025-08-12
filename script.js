@@ -1928,16 +1928,20 @@ function updateStatistikAnzeige() {
 // Hauptfunktion zum Aktualisieren
 function aktualisiereStatistik() {
   updateStatistikAnzeige();
+
+  const { start: zeitraumStart, end: zeitraumEnde } = berechneZeitraum(statistikModus, statistikDatum);
+
   const eintraege = ladeStatistikDaten(statistikModus, statistikDatum);
   const werte = berechneStatistik(eintraege);
 
-  // Anzeige aktualisieren
   statEinnahmen.textContent = `${werte.einnahmen.toFixed(2)} €`;
   statAusgaben.textContent = `${werte.ausgaben.toFixed(2)} €`;
   statBudget.textContent = `${werte.budget.toFixed(2)} €`;
 
+  berechneUndZeigeUeberschuss(zeitraumStart, zeitraumEnde, statistikModus);
   ladeStatistikGraph();
 }
+
 
 
 
@@ -2141,35 +2145,7 @@ ladeStatistikGraph();
 
 
 
-document.querySelectorAll(".zeitraum-button").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".zeitraum-button").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
 
-    aktuellerModus = btn.dataset.modus;
-    aktuellerZeitIndex = 0;  // Reset bei Moduswechsel
-    aktualisiereZeitraumAnzeige();
-    ladeStatistikGraph();
-    berechneUndZeigeUeberschuss(zeitraumStart, zeitraumEnde);
-
-  });
-});
-
-document.getElementById("zeitraum-zurueck").addEventListener("click", () => {
-  aktuellerZeitIndex--;
-  aktualisiereZeitraumAnzeige();
-  ladeStatistikGraph();
-  berechneUndZeigeUeberschuss(zeitraumStart, zeitraumEnde);
-
-});
-
-document.getElementById("zeitraum-vor").addEventListener("click", () => {
-  aktuellerZeitIndex++;
-  aktualisiereZeitraumAnzeige();
-  ladeStatistikGraph();
-  berechneUndZeigeUeberschuss(zeitraumStart, zeitraumEnde);
-
-});
 
 
 
