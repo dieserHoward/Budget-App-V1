@@ -3165,6 +3165,13 @@ body {
 @media (max-width: 768px) {
   #ausgaben-line-chart,
   #ausgaben-pie-chart {
-    height: 10000px !important; /* Auf Handys höher machen */
+    height: 500px !important; /* Auf Handys höher machen */
   }
+}
+
+#ausgaben-legend {
+  margin-bottom: 200px; /* Abstand unter der Legende */
+}
+.chart-section > canvas + .chart-legend {
+  margin-bottom: 20px;
 }
