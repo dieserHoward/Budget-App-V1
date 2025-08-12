@@ -777,8 +777,12 @@ function berechneZeitraum(modus, basisDatum) {
     <canvas id="chart" width="700" height="300" style="border:1px solid #ccc; border-radius:6px;"></canvas>
   </div>
   <div id="chart-budget" class="chart-section" style="display: none;">
-    <div id="ueberschuss-anzeige" class="ueberschuss-box">
-  <h3>💰 Überschuss-Analyse</h3>
+    <div id="ueberschuss-anzeige" class="ueberschuss-box" style="position: relative;">
+  <h3 style="display: flex; align-items: center; justify-content: space-between;">
+    💰 Überschuss-Analyse
+    <button id="ruecklagen-button">...</button>
+
+  </h3>
   <ul>
     <li><span>1. Gesamtüberschuss:</span> <strong id="stufe1">0 €</strong></li>
     <li><span>2. Nach kurzfristigem Sparen:</span> <strong id="stufe2">0 €</strong></li>
@@ -786,9 +790,83 @@ function berechneZeitraum(modus, basisDatum) {
     <li><span>4. Nach langfristigem Sparen:</span> <strong id="stufe4">0 €</strong></li>
   </ul>
 </div>
+
 </div>  
   <div id="chart-ausgaben" class="chart-section" style="display: none;">📉 Graph für Ausgaben</div>
 </div>
+
+
+<!-- Budget freigeben-->
+<!-- Budget freigeben -->
+<div id="ruecklagen-popup" style="display:none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  background: white; border: 1px solid #ccc; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 1000; width: 320px; border-radius: 8px;">
+  <h4>Freigegebene Rücklagen</h4>
+  <label>
+    Kurzfristige Rücklagen: <input type="number" id="popup-kurz" min="0" step="1" />
+  </label><br/><br/>
+  <label>
+    Urlaubsgeld: <input type="number" id="popup-urlaub" min="0" step="1" />
+  </label><br/><br/>
+  <label>
+    Langfristige Rücklagen: <input type="number" id="popup-lang" min="0" step="1" />
+  </label><br/><br/>
+  
+  <div class="button-container">
+    <button id="popup-save">Speichern</button>
+    <button id="popup-cancel">Abbrechen</button>
+  </div>
+</div>
+
+
+<!-- Halbtransparenter Hintergrund -->
+<div id="popup-overlay" style="display:none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.3); z-index:999;"></div>
+
+<script>
+  document.getElementById('ruecklagen-button').addEventListener('click', () => {
+  // Popup und Overlay anzeigen
+  document.getElementById('ruecklagen-popup').style.display = 'block';
+  document.getElementById('popup-overlay').style.display = 'block';
+
+  // Werte aus localStorage laden (falls vorhanden)
+  const freigabe = JSON.parse(localStorage.getItem('ruecklagenFreigabe')) || { kurz:0, urlaub:0, lang:0 };
+  document.getElementById('popup-kurz').value = freigabe.kurz;
+  document.getElementById('popup-urlaub').value = freigabe.urlaub;
+  document.getElementById('popup-lang').value = freigabe.lang;
+});
+
+document.getElementById('popup-cancel').addEventListener('click', () => {
+  // Popup und Overlay schließen
+  document.getElementById('ruecklagen-popup').style.display = 'none';
+  document.getElementById('popup-overlay').style.display = 'none';
+});
+
+document.getElementById('popup-save').addEventListener('click', () => {
+  // Werte aus Inputs lesen
+  const kurz = parseFloat(document.getElementById('popup-kurz').value) || 0;
+  const urlaub = parseFloat(document.getElementById('popup-urlaub').value) || 0;
+  const lang = parseFloat(document.getElementById('popup-lang').value) || 0;
+
+  // Werte in localStorage speichern
+  localStorage.setItem('ruecklagenFreigabe', JSON.stringify({ kurz, urlaub, lang }));
+
+  // Popup und Overlay schließen
+  document.getElementById('ruecklagen-popup').style.display = 'none';
+  document.getElementById('popup-overlay').style.display = 'none';
+
+  // Anzeige aktualisieren (z.B. Überschuss neu berechnen)
+  updateAnzeige();
+});
+
+// Popup schließen, wenn außerhalb des Popups geklickt wird
+document.getElementById('popup-overlay').addEventListener('click', () => {
+  document.getElementById('ruecklagen-popup').style.display = 'none';
+  document.getElementById('popup-overlay').style.display = 'none';
+});
+
+</script>
+
+<!-- Budget freigeben fertig-->
+
 
 </div>
     </div>
@@ -802,18 +880,27 @@ function berechneUndZeigeUeberschuss(zeitraumStart, zeitraumEnde, modus) {
   // Sparsummen (Monatsbasis) aus LocalStorage
   const sparquoten = JSON.parse(localStorage.getItem("sparquoten")) || {};
   let kurz = parseFloat(sparquoten.kurzSumme) || 0;
-  let mittel = parseFloat(sparquoten.mittelSumme) || 0;
+  let mittel = parseFloat(sparquoten.mittelSumme) || 0; // Urlaub
   let lang = parseFloat(sparquoten.langSumme) || 0;
 
-  // Jahresmodus → Sparsummen hochrechnen
+  // Rücklagen-Freigaben aus LocalStorage
+  const freigabe = JSON.parse(localStorage.getItem('ruecklagenFreigabe')) || { kurz: 0, urlaub: 0, lang: 0 };
+
   if (modus === "jahr") {
     const heute = new Date();
     const anzahlMonate = (zeitraumEnde.getFullYear() === heute.getFullYear())
       ? heute.getMonth() + 1
       : 12;
+
+    // Sparsummen hochrechnen (monatsbasis * monate)
     kurz *= anzahlMonate;
     mittel *= anzahlMonate;
     lang *= anzahlMonate;
+
+    // Freigaben zur jeweiligen Sparsumme hinzufügen (Jahresmodus)
+    kurz -= freigabe.kurz || 0;
+    mittel -= freigabe.urlaub || 0;
+    lang -= freigabe.lang || 0;
   }
 
   // Berechnungen
@@ -828,6 +915,7 @@ function berechneUndZeigeUeberschuss(zeitraumStart, zeitraumEnde, modus) {
   setzeWert("stufe3", stufe3);
   setzeWert("stufe4", stufe4);
 }
+
 
 // Hilfsfunktion für einheitliche Formatierung
 function setzeWert(id, betrag) {
