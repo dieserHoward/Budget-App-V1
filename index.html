@@ -15,7 +15,6 @@
 
 
 <!---========================= HIER HTML ===========================-->
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -23,12 +22,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
 
   <title>Budget Manager</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 
    <!-- ================= POPUP: Einstellungen ================= -->
@@ -52,6 +54,10 @@
     <div class="setting-option" id="open-sparer-popup">
       <i>🏦</i><span>Sparen</span>
     </div>
+    <div class="setting-option" id="open-datenexport-popup">
+  <i>📤</i><span>Daten exportieren</span>
+</div>
+
   </div>
 </div>
 
@@ -427,6 +433,97 @@
 
 <!-- ================= POPUP: Kategorien sortieren Ende ================= -->
 
+<!-- ================= POPUP: Datenexport Start ================= -->
+
+<div id="popup-datenexport-overlay" style="display:none;">
+  <div id="popup-datenexport">
+    <div class="popup-header">
+      <h2>Daten exportieren</h2>
+      <span id="popup-datenexport-close" class="popup-close">&times;</span>
+    </div>
+    
+    <div class="popup-body">
+      <label for="export-start">Startdatum</label>
+      <input type="date" id="export-start">
+
+      <label for="export-ende">Enddatum</label>
+      <input type="date" id="export-ende">
+    </div>
+
+    <div class="popup-footer">
+      <button id="export-daten-btn" class="export-btn">📤 Exportieren</button>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const openBtn = document.getElementById("open-datenexport-popup");
+  const closeBtn = document.getElementById("popup-datenexport-close");
+  const overlay = document.getElementById("popup-datenexport-overlay");
+  const exportBtn = document.getElementById("export-daten-btn");
+  const popup = document.getElementById("popup-datenexport");
+
+  // Öffnen
+  openBtn.addEventListener("click", () => {
+    overlay.style.display = "flex"; // Flex für Centering
+  });
+
+  // Schließen (Kreuz)
+  closeBtn.addEventListener("click", () => {
+    overlay.style.display = "none";
+  });
+
+  // Schließen bei Klick außerhalb
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) {
+      overlay.style.display = "none";
+    }
+  });
+
+  // Export-Logik
+  exportBtn.addEventListener("click", () => {
+    const start = new Date(document.getElementById("export-start").value);
+    const ende = new Date(document.getElementById("export-ende").value);
+
+    const einmalige = JSON.parse(localStorage.getItem("eintraege")) || [];
+    const wiederkehrende = JSON.parse(localStorage.getItem("wiederkehrendeEintraege")) || [];
+
+    const gefiltertEinmalig = einmalige.filter(e => {
+      const d = new Date(e.datum);
+      return d >= start && d <= ende;
+    });
+
+    const gefiltertWiederkehrend = wiederkehrende.filter(e => {
+      const startDatum = new Date(e.start);
+      const endeDatum = new Date(e.ende);
+      return (start <= endeDatum) && (ende >= startDatum);
+    });
+
+    const exportData = {
+      einmalige: gefiltertEinmalig,
+      wiederkehrende: gefiltertWiederkehrend
+    };
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `datenexport_${start.toISOString().split('T')[0]}_${ende.toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    alert("Export abgeschlossen!");
+  });
+});
+
+</script>
+
+<!-- ================= POPUP: Datenexport Ende ================= -->
+
+
+
 
 
 
@@ -650,10 +747,12 @@ function berechneZeitraum(modus, basisDatum) {
   } else if (modus === 'jahr') {
     start.setMonth(0, 1);
     end.setMonth(11, 31);
-    const heute = new Date();
-    if (basisDatum.getFullYear() === heute.getFullYear()) {
-      end.setMonth(heute.getMonth() + 1, 0);
-    }
+    // Entferne oder kommentiere die folgende Zeile aus,
+    // damit end nicht auf aktuellen Monat begrenzt wird:
+    // const heute = new Date();
+    // if (basisDatum.getFullYear() === heute.getFullYear()) {
+    //   end.setMonth(heute.getMonth() + 1, 0);
+    // }
   } else { // Woche
     const diff = basisDatum.getDay() === 0 ? -6 : 1 - basisDatum.getDay();
     start.setDate(start.getDate() + diff);
@@ -664,6 +763,7 @@ function berechneZeitraum(modus, basisDatum) {
   end.setHours(23, 59, 59, 999);
   return { start, end };
 }
+
 
 
 
@@ -741,19 +841,35 @@ function setzeWert(id, betrag) {
 
 
 // Gesamtüberschuss berechnen
-function berechneGesamtUeberschuss(zeitraumStart, zeitraumEnde) {
+function berechneGesamtUeberschuss(zeitraumStart, zeitraumEnde, modus) {
   const einmalige = JSON.parse(localStorage.getItem("eintraege")) || [];
   const wiederkehrende = JSON.parse(localStorage.getItem("wiederkehrendeEintraege")) || [];
   const toDate = (str) => new Date(str + "T00:00:00");
 
-  const relevanteEintraege = [
-    ...einmalige.filter(e => {
-      const d = toDate(e.datum);
-      return d >= zeitraumStart && d <= zeitraumEnde;
-    })
-  ];
+  let relevanteEintraege = [];
 
-  // Wiederkehrende berücksichtigen
+  if (modus === "jahr") {
+    // 📌 Für EINMALIGE Zahlungen immer das komplette Jahr nehmen
+    const jahrStart = new Date(zeitraumStart.getFullYear(), 0, 1);
+    const jahrEnde = new Date(zeitraumStart.getFullYear(), 11, 31, 23, 59, 59, 999);
+
+    relevanteEintraege.push(
+      ...einmalige.filter(e => {
+        const d = toDate(e.datum);
+        return d >= jahrStart && d <= jahrEnde;
+      })
+    );
+  } else {
+    // 📌 In Monat/Woche wie bisher
+    relevanteEintraege.push(
+      ...einmalige.filter(e => {
+        const d = toDate(e.datum);
+        return d >= zeitraumStart && d <= zeitraumEnde;
+      })
+    );
+  }
+
+  // 📌 Wiederkehrende Zahlungen nur bis Zeitraum-Ende
   wiederkehrende.forEach(e => {
     const start = toDate(e.start);
     const ende = toDate(e.ende);
@@ -773,7 +889,7 @@ function berechneGesamtUeberschuss(zeitraumStart, zeitraumEnde) {
     }
   });
 
-  // Summen berechnen
+  // Summen
   let einnahmen = 0, ausgaben = 0, investitionen = 0;
   relevanteEintraege.forEach(e => {
     const betrag = parseFloat(e.betrag);
@@ -789,6 +905,8 @@ function berechneGesamtUeberschuss(zeitraumStart, zeitraumEnde) {
     ueberschuss: einnahmen - ausgaben - investitionen
   };
 }
+
+
 
 document.addEventListener("DOMContentLoaded", () => {
   let statistikDatum = new Date();
@@ -988,33 +1106,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function berechneZeitraum(modus, basisDatum) {
-    const start = new Date(basisDatum);
-    const end = new Date(basisDatum);
+  const start = new Date(basisDatum);
+  const end = new Date(basisDatum);
 
-    if (modus === 'monat') {
-        start.setDate(1);
-        end.setMonth(start.getMonth() + 1);
-        end.setDate(0);
-    } else if (modus === 'jahr') {
-        start.setMonth(0, 1);
-        end.setMonth(11, 31); // erstmal auf Jahresende setzen
+  if (modus === 'monat') {
+    start.setDate(1);
+    end.setMonth(start.getMonth() + 1);
+    end.setDate(0);
+  } else if (modus === 'jahr') {
+    start.setMonth(0, 1);
 
-        const heute = new Date();
-
-        // Wenn das betrachtete Jahr das aktuelle Jahr ist → nur bis aktueller Monat
-        if (basisDatum.getFullYear() === heute.getFullYear()) {
-            end.setMonth(heute.getMonth() + 1, 0); // letzter Tag des aktuellen Monats
-        }
+    // Wenn das Basisjahr aktuell ist, Enddatum = letzter Tag aktueller Monat
+    const heute = new Date();
+    if (basisDatum.getFullYear() === heute.getFullYear()) {
+      end.setMonth(heute.getMonth() + 1, 0);
     } else {
-        const diff = basisDatum.getDay() === 0 ? -6 : 1 - basisDatum.getDay();
-        start.setDate(start.getDate() + diff);
-        end.setDate(start.getDate() + 6);
+      // Für vergangene oder zukünftige Jahre nimm komplettes Jahr
+      end.setMonth(11, 31);
     }
+  } else { // Woche
+    const diff = basisDatum.getDay() === 0 ? -6 : 1 - basisDatum.getDay();
+    start.setDate(start.getDate() + diff);
+    end.setDate(start.getDate() + 6);
+  }
 
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
-    return { start, end };
+  start.setHours(0, 0, 0, 0);
+  end.setHours(23, 59, 59, 999);
+  return { start, end };
 }
+
 
 
     function istEintragImZeitraumWiederkehrend(eintrag, start, end) {
@@ -1066,7 +1186,21 @@ function ladeUebersichtGraph() {
 
   const berechneSummen = (typ) => {
   const map = new Map();
-  const einmalig = einmalige.filter(e => e.typ === typ && new Date(e.datum) >= start && new Date(e.datum) <= end);
+  let filterStart = start;
+let filterEnd = end;
+
+if (uebersichtModus === "jahr") {
+  const jahr = start.getFullYear();
+  filterStart = new Date(jahr, 0, 1);        // 1. Jan
+  filterEnd = new Date(jahr, 11, 31, 23, 59, 59, 999);  // 31. Dez, Ende Tag
+}
+
+const einmaligGefiltert = einmalige.filter(e => {
+  if (e.typ !== typ) return false;
+  const datum = new Date(e.datum + "T00:00:00");
+  return datum >= filterStart && datum <= filterEnd;
+});
+
   const gruppenMap = new Map();
 
   const istSortiert = istSortierModusAktiv();
@@ -1081,7 +1215,7 @@ function ladeUebersichtGraph() {
   };
 
   // === Einmalige Einträge ===
-  einmalig.forEach(e => {
+  einmaligGefiltert.forEach(e => {
     const kategorie = e.kategorie;
     const betrag = parseFloat(e.betrag);
     const ziel = istSortiert ? (findeGruppe(kategorie) || "Nicht gruppiert") : kategorie;
@@ -1809,6 +1943,7 @@ if (gespeicherteKategorien) {
 
 </body>
 </html>
+
 
 
 <!---========================= HIER HTML Ende aber ohne Schluss===========================-->
