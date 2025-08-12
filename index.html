@@ -15,6 +15,7 @@
 
 
 <!---========================= HIER HTML ===========================-->
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -30,6 +31,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
 
 
   <title>Budget Manager</title>
@@ -778,8 +780,16 @@ function berechneZeitraum(modus, basisDatum) {
 <!-- Statistik-Graphen -->
 <div id="statistik-graph-container">
   <div id="chart-einnahmen" class="chart-section">
-    📈 Graph für Einnahmen
-    <canvas id="chart" width="700" height="300" style="border:1px solid #ccc; border-radius:6px;"></canvas>
+    
+    <canvas id="chart" width="700" height="300" style="border:none; border-radius:6px;"></canvas>
+    <label for="einnahmenFilter">Filter Einnahmen:</label>
+  <select id="einnahmenFilter">
+    <option value="alle-e">Alle</option>
+    <option value="einmalig-e" selected>Einmalige</option>
+    <option value="wiederkehrend-e">Wiederkehrende</option>
+  </select>
+<canvas id="einnahmen-line-chart" width="700" height="300" style="margin-top: 40px;"></canvas>
+
   </div>
   <div id="chart-budget" class="chart-section" style="display: none;">
     <div id="ueberschuss-anzeige" class="ueberschuss-box" style="position: relative;">
@@ -1029,6 +1039,7 @@ zeichneAusgabenKuchen(start, end); // <-- Hier ergänzen
       btn.classList.add('active');
       statistikModus = btn.getAttribute('data-modus');
       updateAnzeige();
+      updateAusgabenAnzeige();
     });
   });
 
@@ -1038,6 +1049,7 @@ zeichneAusgabenKuchen(start, end); // <-- Hier ergänzen
     else if (statistikModus === "monat") statistikDatum.setMonth(statistikDatum.getMonth() - 1);
     else statistikDatum.setDate(statistikDatum.getDate() - 7);
     updateAnzeige();
+    updateAusgabenAnzeige();
   });
 
   document.getElementById("zeitraum-vor").addEventListener("click", () => {
@@ -1045,9 +1057,11 @@ zeichneAusgabenKuchen(start, end); // <-- Hier ergänzen
     else if (statistikModus === "monat") statistikDatum.setMonth(statistikDatum.getMonth() + 1);
     else statistikDatum.setDate(statistikDatum.getDate() + 7);
     updateAnzeige();
+    updateAusgabenAnzeige();
   });
 
   updateAnzeige();
+  updateAusgabenAnzeige();
 });
 
 
@@ -1055,7 +1069,7 @@ zeichneAusgabenKuchen(start, end); // <-- Hier ergänzen
 </script>
 
 
-<!-- Ausgaben Graph Statistik-->
+<!-- Ausgaben Graph 1 Statistik-->
 <script>
 const farbPalette = [
   '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf',
@@ -1218,7 +1232,7 @@ function zeichneAusgabenKuchen(start, ende) {
           formatter: (value, context) => {
             const sum = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
             const percent = (value / sum) * 100;
-            return percent > 7 ? percent.toFixed(1) + '%' : '';
+            return percent > 5 ? percent.toFixed(1) + '%' : '';
           }
         }
       }
@@ -1275,10 +1289,10 @@ function zeichneAusgabenKuchen(start, ende) {
 
 
 
-function updateAnzeige() {
+function updateAusgabenAnzeige() {
   const { start, end } = berechneZeitraum(statistikModus, statistikDatum);
 
-  // Anzeige Zeitraum aktualisieren (z.B. Juli 2025)
+  // Anzeige Zeitraum aktualisieren (z.B. Juli 2025 oder Wochenbereich)
   const options = { year: 'numeric', month: 'long' };
   let zeitraumText = '';
   if (statistikModus === 'monat') {
@@ -1292,10 +1306,16 @@ function updateAnzeige() {
   }
   document.getElementById('zeitraum-anzeige').innerText = zeitraumText;
 
+  // Beispiel: Überschuss berechnen (wenn du das hast)
   berechneUndZeigeUeberschuss(start, end, statistikModus);
+
+  // Ausgaben-Graph aktualisieren
   zeichneAusgabenKuchen(start, end);
+
+  // Falls vorhanden: kumulierte Ausgaben aktualisieren
   zeichneAusgabenKumuliert(start, end);
 }
+
 
 
 </script>
@@ -1540,6 +1560,410 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 <div style="height: 20px;"></div>
 
+
+
+
+<!-- ===================== Graphen für Einnahmen ========================== -->
+
+<!-- ===================== Graph 1 für Einnahmen Start ========-->
+<script> 
+function ladeEinnahmenNachKategorie(start, ende) {
+  const eintraege = JSON.parse(localStorage.getItem("eintraege")) || [];
+  const wiederkehrende = JSON.parse(localStorage.getItem("wiederkehrendeEintraege")) || [];
+
+  const toDate = (str) => new Date(str + "T00:00:00");
+
+  let alleEinnahmen = [];
+
+  // Einmalige Einnahmen filtern
+  alleEinnahmen = eintraege.filter(e => {
+    if (e.typ !== "einnahme") return false;
+    const d = toDate(e.datum);
+    return d >= start && d <= ende;
+  });
+
+  // Wiederkehrende Einnahmen ergänzen
+  wiederkehrende.forEach(e => {
+    if (e.typ !== "einnahme") return;
+    const startW = toDate(e.start);
+    const endeW = toDate(e.ende);
+    let lauf = new Date(start);
+    while (lauf <= ende) {
+      if (lauf >= startW && lauf <= endeW && istIntervallFuerDatum(e.intervall, lauf)) {
+        alleEinnahmen.push({
+          kategorie: e.kategorie,
+          betrag: parseFloat(e.betrag),
+          datum: lauf.toISOString().split("T")[0]
+        });
+      }
+      lauf.setDate(lauf.getDate() + 1);
+    }
+  });
+
+  const kategorienSumme = {};
+
+  alleEinnahmen.forEach(e => {
+    let zielKategorie;
+
+    if (istSortierModusAktiv()) {
+      // Im Sortiermodus die Oberkategorie nehmen
+      zielKategorie = findeOberkategorie(e.kategorie, "einnahme");
+    } else {
+      zielKategorie = e.kategorie || "Sonstiges";
+    }
+
+    kategorienSumme[zielKategorie] = (kategorienSumme[zielKategorie] || 0) + parseFloat(e.betrag);
+  });
+
+  return kategorienSumme;
+}
+let einnahmenChart = null;
+
+function zeichneEinnahmenKuchen(start, ende) {
+  const daten = ladeEinnahmenNachKategorie(start, ende);
+
+  const sortierteEintraege = Object.entries(daten)
+    .sort((a, b) => b[1] - a[1]);
+
+  const labels = sortierteEintraege.map(e => e[0]);
+  const values = sortierteEintraege.map(e => e[1]);
+
+  const ctx = document.getElementById('chart').getContext('2d');
+
+  const farben = labels.map(label => getFarbeFuerKategorie(label));
+
+  if (einnahmenChart) {
+    einnahmenChart.destroy();
+  }
+
+  einnahmenChart = new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: farben,
+        borderWidth: 1,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      rotation: -0.5 * Math.PI,
+      responsive: true,
+      plugins: {
+        legend: {
+          display: false // Eigene Legende erzeugen
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.parsed || 0;
+              const sum = context.chart._metasets[context.datasetIndex].total;
+              const percent = sum ? (value / sum * 100).toFixed(1) : 0;
+              return `${label}: ${value.toFixed(2)} € (${percent}%)`;
+            }
+          }
+        },
+        datalabels: {
+          color: '#fff',
+          font: {
+            weight: 'bold',
+            size: 14
+          },
+          formatter: (value, context) => {
+            const sum = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+            const percent = (value / sum) * 100;
+            return percent > 5 ? percent.toFixed(1) + '%' : '';
+          }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+
+  // Legende für Einnahmen (analog Ausgaben-Legende)
+  const containerId = 'einnahmen-pie-legend';
+  let legendDiv = document.getElementById(containerId);
+  if (!legendDiv) {
+    legendDiv = document.createElement('div');
+    legendDiv.id = containerId;
+    legendDiv.style.marginTop = '15px';
+    legendDiv.style.display = 'flex';
+    legendDiv.style.flexDirection = 'column';
+    legendDiv.style.gap = '6px';
+    ctx.canvas.parentNode.appendChild(legendDiv);
+  }
+  legendDiv.innerHTML = '';
+
+  const summe = values.reduce((a, b) => a + b, 0);
+
+  labels.forEach((label, i) => {
+    const wert = values[i];
+    const prozent = summe ? ((wert / summe) * 100).toFixed(1) : 0;
+
+    const item = document.createElement('div');
+    item.style.display = 'flex';
+    item.style.alignItems = 'center';
+    item.style.gap = '8px';
+    item.style.fontSize = '14px';
+
+    const farbBox = document.createElement('span');
+    farbBox.style.display = 'inline-block';
+    farbBox.style.width = '18px';
+    farbBox.style.height = '18px';
+    farbBox.style.backgroundColor = farben[i];
+    farbBox.style.borderRadius = '3px';
+
+    const text = document.createElement('span');
+    text.textContent = `${label}: ${prozent}%`;
+
+    item.appendChild(farbBox);
+    item.appendChild(text);
+
+    legendDiv.appendChild(item);
+  });
+}
+function updateAnzeige() {
+  const { start, end } = berechneZeitraum(statistikModus, statistikDatum);
+
+  // Anzeige Zeitraum aktualisieren (z.B. Juli 2025)
+  const options = { year: 'numeric', month: 'long' };
+  let zeitraumText = '';
+  if (statistikModus === 'monat') {
+    zeitraumText = statistikDatum.toLocaleDateString('de-DE', options);
+  } else if (statistikModus === 'jahr') {
+    zeitraumText = statistikDatum.getFullYear().toString();
+  }
+  document.getElementById('zeitraum-anzeige').innerText = zeitraumText;
+
+  // Beide Graphen mit gleichem Zeitraum aktualisieren
+  zeichneEinnahmenKuchen(start, end);
+
+  // Filter auslesen
+  const filter = document.getElementById('einnahmenFilter')?.value || 'alle';
+  zeichneEinnahmenKumuliert(start, end, filter);
+}
+
+
+
+</script>
+
+<!-- ===================== Graph 1 für Einnahmen Ende ========-->
+
+<!-- ===================== Graph 2 für Einnahmen Start ========-->
+<script>
+
+
+
+function ladeKumulierteEinnahmenNachKategorie(start, ende, filter = "alle") {
+  const eintraege = JSON.parse(localStorage.getItem("eintraege")) || [];
+  const wiederkehrende = JSON.parse(localStorage.getItem("wiederkehrendeEintraege")) || [];
+  const toDate = (str) => new Date(str + "T00:00:00");
+
+  let alleEinnahmen = [];
+
+  // Einmalige Einnahmen
+  if (filter === "alle" || filter === "einmalig-e") {
+    alleEinnahmen = eintraege.filter(e => {
+      if (e.typ !== "einnahme") return false;
+      const d = toDate(e.datum);
+      return d >= start && d <= ende;
+    });
+  }
+
+  // Wiederkehrende Einnahmen
+  if (filter === "alle-e" || filter === "wiederkehrend-e") {
+    wiederkehrende.forEach(e => {
+      if (e.typ !== "einnahme") return;
+      const startW = toDate(e.start);
+      const endeW = toDate(e.ende);
+      let lauf = new Date(start);
+      while (lauf <= ende) {
+        if (lauf >= startW && lauf <= endeW && istIntervallFuerDatum(e.intervall, lauf)) {
+          alleEinnahmen.push({
+            kategorie: e.kategorie,
+            betrag: parseFloat(e.betrag),
+            datum: lauf.toISOString().split("T")[0]
+          });
+        }
+        lauf.setDate(lauf.getDate() + 1);
+      }
+    });
+  }
+
+  // Tage im Zeitraum
+  const tage = [];
+  for (let d = new Date(start); d <= ende; d.setDate(d.getDate() + 1)) {
+    tage.push(d.toISOString().split("T")[0]);
+  }
+
+  // Kategorien (ggf. Oberkategorie)
+  let kategorienSet = new Set();
+  alleEinnahmen.forEach(e => {
+    let zielKategorie;
+    if (typeof istSortierModusAktiv === 'function' && istSortierModusAktiv()) {
+      zielKategorie = typeof findeOberkategorie === 'function' ? findeOberkategorie(e.kategorie, "einnahme") : (e.kategorie || "Sonstiges");
+    } else {
+      zielKategorie = e.kategorie || "Sonstiges";
+    }
+    e.zielKategorie = zielKategorie;
+    kategorienSet.add(zielKategorie);
+  });
+  const kategorien = Array.from(kategorienSet);
+
+  // Daten pro Tag initialisieren
+  const datenProTag = {};
+  tage.forEach(tag => {
+    datenProTag[tag] = { gesamt: 0, kategorien: {} };
+    kategorien.forEach(k => datenProTag[tag].kategorien[k] = 0);
+  });
+
+  // Werte einsortieren
+  alleEinnahmen.forEach(e => {
+    if (datenProTag[e.datum]) {
+      datenProTag[e.datum].gesamt += e.betrag;
+      datenProTag[e.datum].kategorien[e.zielKategorie] += e.betrag;
+    }
+  });
+
+  // Kumulieren
+  const kumulativ = { tage: tage, gesamt: [], kategorien: {} };
+  kategorien.forEach(k => kumulativ.kategorien[k] = []);
+  let sumGesamt = 0;
+  const sumKategorien = {};
+  kategorien.forEach(k => sumKategorien[k] = 0);
+
+  tage.forEach(tag => {
+    sumGesamt += datenProTag[tag].gesamt;
+    kumulativ.gesamt.push(sumGesamt);
+    kategorien.forEach(k => {
+      sumKategorien[k] += datenProTag[tag].kategorien[k];
+      kumulativ.kategorien[k].push(sumKategorien[k]);
+    });
+  });
+
+  return kumulativ;
+}
+let einnahmenLineChart = null;
+
+function zeichneEinnahmenKumuliert(start, ende, filter = "alle") {
+  const daten = ladeKumulierteEinnahmenNachKategorie(start, ende, filter);
+
+  const ctxEl = document.getElementById('einnahmen-line-chart');
+  if (!ctxEl) return;
+  const ctx = ctxEl.getContext('2d');
+
+  if (einnahmenLineChart) einnahmenLineChart.destroy();
+
+  const kategorien = Object.keys(daten.kategorien);
+
+  // Keine Daten -> Chart leeren oder Meldung ausgeben
+  if (kategorien.length === 0 && daten.gesamt.length === 0) return;
+
+  const datasets = [];
+
+  kategorien.forEach(kategorie => {
+    const farbe = getFarbeFuerKategorie(kategorie);
+    datasets.push({
+      label: kategorie,
+      data: daten.kategorien[kategorie], // nur Tageswerte!
+      borderColor: farbe,
+      backgroundColor: farbe.replace(')', ', 0.4)').replace('rgb', 'rgba'),
+      borderWidth: 1.5,
+      fill: true,
+      tension: 0.1,
+      stack: 'stack1',
+      pointRadius: 0
+    });
+  });
+
+  // Schwarze Gesamtkostenlinie (kumuliert)
+  datasets.push({
+    label: 'Gesamteinnahmen (kumuliert)',
+    data: daten.gesamt,
+    borderColor: '#000000',
+    borderWidth: 3,
+    fill: false,
+    tension: 0.1,
+    pointRadius: 0
+  });
+
+  einnahmenLineChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: daten.tage,
+      datasets: datasets
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: {
+          type: 'time',
+          time: { unit: 'day', tooltipFormat: 'dd.MM.yyyy', displayFormats: { day: 'dd.MM' } },
+          title: { display: true, text: 'Datum' }
+        },
+        y: {
+          beginAtZero: true,
+          stacked: true,
+          title: { display: true, text: 'Kumulierte Einnahmen (€)' }
+        }
+      },
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          callbacks: {
+            label: ctx => {
+              const val = (ctx.parsed && ctx.parsed.y !== undefined) ? ctx.parsed.y : ctx.parsed;
+              return `${ctx.dataset.label}: ${Number(val || 0).toFixed(2)} €`;
+            }
+          }
+        }
+      },
+      interaction: { mode: 'nearest', intersect: false }
+    }
+  });
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const start = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const ende = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+
+  const einnahmenFilter = document.getElementById('einnahmenFilter');
+  const ausgabenFilter = document.getElementById('ausgabenFilter'); // falls vorhanden
+
+  // Zeichne initial mit den jeweiligen Filtern (default oder selected)
+  zeichneEinnahmenKumuliert(start, ende, einnahmenFilter ? einnahmenFilter.value : 'alle');
+  if (ausgabenFilter) {
+    zeichneAusgabenKumuliert(start, ende, ausgabenFilter.value);
+  }
+
+  // Eventlistener für Einnahmen
+  if (einnahmenFilter) {
+    einnahmenFilter.addEventListener('change', (e) => {
+      zeichneEinnahmenKumuliert(start, ende, e.target.value);
+    });
+  }
+
+  // Eventlistener für Ausgaben (falls Filter und Funktion existieren)
+  if (ausgabenFilter) {
+    ausgabenFilter.addEventListener('change', (e) => {
+      zeichneAusgabenKumuliert(start, ende, e.target.value);
+    });
+  }
+});
+
+
+
+
+
+</script>
+
+
+<!-- ===================== Graph 2 für Einnahmen Ende ========-->
 </div>
 
 <!-- ======================================= Statistik-Tab Ende ======================================= -->
@@ -2535,7 +2959,6 @@ if (gespeicherteKategorien) {
 
 </body>
 </html>
-
 
 
 <!---========================= HIER HTML Ende aber ohne Schluss===========================-->
