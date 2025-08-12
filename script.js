@@ -1978,22 +1978,21 @@ aktualisiereStatistik(); // Initialer Aufruf
 
 
 function ladeStatistikGraph() {
-  const daten = ladeDatenNachZeitraum(statistikDatum, statistikModus); // Zeitraum beachten
-  const gruppenData = JSON.parse(localStorage.getItem("kategorieGruppen")) || { einnahme: [], ausgabe: [] };
+  const { start, end } = berechneZeitraum(statistikModus, statistikDatum);
 
   switch (aktiverChartIndex) {
     case 0:
-      const gruppenSummen = getGruppenSummenAusEinnahmen(daten.einnahmen, gruppenData);
-      renderEinnahmenGraph(gruppenSummen);
+      // Einnahmen-Graph (bereits vorhanden)
       break;
     case 1:
-      // renderBudgetGraph(...) später hinzufügen
+      // Budget-Graph (kommt später)
       break;
     case 2:
-      // renderAusgabenGraph(...) später hinzufügen
+      zeichneAusgabenKuchen(start, end);
       break;
   }
 }
+
 
 updateStatistikAnzeige();
 ladeStatistikGraph(); // neu
