@@ -800,6 +800,8 @@ function berechneZeitraum(modus, basisDatum) {
 <div id="chart-ausgaben" class="chart-section" style="display: none;">
   
   <canvas id="ausgaben-pie-chart" width="700" height="300" style="border:none; border-radius:6px;"></canvas>
+<!-- Die Legende wird hier dynamisch eingefügt -->
+
 
   <select id="ausgabenFilter">
     <option value="alle">Alle</option>
@@ -890,12 +892,12 @@ document.getElementById('popup-overlay23').addEventListener('click', () => {
 
 <!-- Budget freigeben fertig-->
 
-
 </div>
     </div>
   </div>
 
 <script>
+
 
 function berechneUndZeigeUeberschuss(zeitraumStart, zeitraumEnde, modus) {
   const result = berechneGesamtUeberschuss(zeitraumStart, zeitraumEnde, modus); 
@@ -1055,6 +1057,30 @@ zeichneAusgabenKuchen(start, end); // <-- Hier ergänzen
 
 <!-- Ausgaben Graph Statistik-->
 <script>
+const farbPalette = [
+  '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf',
+  '#393b79', '#637939', '#8c6d31', '#843c39', '#7b4173', '#3182bd', '#6baed6', '#9ecae1', '#c6dbef', '#e6550d',
+  '#fd8d3c', '#fdae6b', '#fdd0a2', '#31a354', '#74c476', '#a1d99b', '#c7e9c0', '#756bb1', '#9e9ac8', '#bcbddc',
+  '#dadaeb', '#636363', '#969696', '#bdbdbd', '#d9d9d9', '#e7ba52', '#e7cb94', '#bd9e39', '#ad494a', '#d6616b',
+  '#e7969c', '#7b615c', '#a6611a', '#dfc27d', '#80cdc1', '#018571', '#dfc27d', '#a6611a', '#f7f7f7', '#cccccc',
+  '#b2182b', '#ef8a62', '#fddbc7', '#2166ac', '#67a9cf', '#d1e5f0', '#b8e186', '#7fbc41', '#4d9221', '#276419'
+];
+// Globale Map für Kategorie -> Farbe
+const kategorieFarbenMap = new Map();
+
+function getFarbeFuerKategorie(kategorie) {
+  if (kategorieFarbenMap.has(kategorie)) {
+    return kategorieFarbenMap.get(kategorie);
+  }
+  // Neue Farbe zuweisen
+  const idx = kategorieFarbenMap.size % farbPalette.length;
+  const farbe = farbPalette[idx];
+  kategorieFarbenMap.set(kategorie, farbe);
+  return farbe;
+}
+
+
+
 function istSortierModusAktiv() {
   return localStorage.getItem("sortierModusAktiv") === "true";
 }
@@ -1140,70 +1166,111 @@ function zeichneAusgabenKuchen(start, ende) {
 
   // Sortiere Kategorien nach Größe absteigend
   const sortierteEintraege = Object.entries(daten)
-    .sort((a, b) => b[1] - a[1]); // b[1]-a[1] für absteigend
+    .sort((a, b) => b[1] - a[1]);
 
   const labels = sortierteEintraege.map(e => e[0]);
   const values = sortierteEintraege.map(e => e[1]);
 
   const ctx = document.getElementById('ausgaben-pie-chart').getContext('2d');
 
+  // Farben generieren (oder festlegen)
+  const farben = labels.map(label => getFarbeFuerKategorie(label));
+
   if (ausgabenChart) {
     ausgabenChart.destroy();
   }
 
   ausgabenChart = new Chart(ctx, {
-  type: 'pie',
-  data: {
-    labels,
-    datasets: [{
-      data: values,
-      backgroundColor: labels.map(() => '#' + Math.floor(Math.random()*16777215).toString(16)),
-      borderWidth: 1
-    }]
-  },
-  options: {
-    rotation: -0.5 * Math.PI,
-    responsive: true,
-    plugins: {
-      legend: {
-        display: true,          // Legende auf jeden Fall anzeigen
-        position: 'bottom',     // Legende unter dem Chart
-        labels: {
-          boxWidth: 20,
-          padding: 15,
-          font: {
-            size: 14
-          }
-        }
-      },
-      tooltip: {
-        callbacks: {
-          label: function(context) {
-            const label = context.label || '';
-            const value = context.parsed || 0;
-            return `${label}: ${value.toFixed(2)} €`;
-          }
-        }
-      },
-      datalabels: {
-        color: '#fff',
-        font: {
-          weight: 'bold',
-          size: 14
+    type: 'pie',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: farben,
+        borderWidth: 1,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      rotation: -0.5 * Math.PI,
+      responsive: true,
+      plugins: {
+        legend: {
+          display: false // Wir erstellen eigene Legende weiter unten
         },
-        formatter: (value, context) => {
-          const sum = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-          const percent = (value / sum) * 100;
-          return percent > 7 ? percent.toFixed(1) + '%' : '';
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.parsed || 0;
+              const sum = context.chart._metasets[context.datasetIndex].total;
+              const percent = sum ? (value / sum * 100).toFixed(1) : 0;
+              return `${label}: ${value.toFixed(2)} € (${percent}%)`;
+            }
+          }
+        },
+        datalabels: {
+          color: '#fff',
+          font: {
+            weight: 'bold',
+            size: 14
+          },
+          formatter: (value, context) => {
+            const sum = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+            const percent = (value / sum) * 100;
+            return percent > 7 ? percent.toFixed(1) + '%' : '';
+          }
         }
       }
-    }
-  },
-  plugins: [ChartDataLabels]
-});
+    },
+    plugins: [ChartDataLabels]
+  });
 
+  // Jetzt eigene Legende mit Prozent erstellen und anzeigen
+  const legendeContainer = document.getElementById('ausgaben-pie-legend');
+  if (!legendeContainer) {
+    // Falls noch kein Container, erstelle ihn unter dem Canvas
+    const container = document.createElement('div');
+    container.id = 'ausgaben-pie-legend';
+    container.style.marginTop = '15px';
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
+    container.style.gap = '6px';
+    ctx.canvas.parentNode.appendChild(container);
+  }
 
+  const legendDiv = document.getElementById('ausgaben-pie-legend');
+  legendDiv.innerHTML = ''; // Alte Legende leeren
+
+  const summe = values.reduce((a,b) => a + b, 0);
+
+  labels.forEach((label, i) => {
+    const wert = values[i];
+    const prozent = summe ? ((wert / summe) * 100).toFixed(1) : 0;
+
+    const item = document.createElement('div');
+    item.style.display = 'flex';
+    item.style.alignItems = 'center';
+    item.style.gap = '8px';
+    item.style.fontSize = '14px';
+
+    const farbBox = document.createElement('span');
+    farbBox.style.display = 'inline-block';
+    farbBox.style.width = '18px';
+    farbBox.style.height = '18px';
+    farbBox.style.backgroundColor = farben[i];
+    farbBox.style.borderRadius = '3px';
+
+    const text = document.createElement('span');
+    text.textContent = `${label}: ${prozent}%`;
+
+    item.appendChild(farbBox);
+    item.appendChild(text);
+
+    legendDiv.appendChild(item);
+  });
 }
+
 
 
 
@@ -1380,13 +1447,13 @@ function zeichneAusgabenKumuliert(start, ende, filter = "alle") {
 const datasets = [];
 const farben = {}; // <-- Definition hier
 
-kategorien.forEach((kategorie, i) => {
-  farben[kategorie] = farbPalette[i % farbPalette.length];
+kategorien.forEach(kategorie => {
+  const farbe = getFarbeFuerKategorie(kategorie);
   datasets.push({
     label: kategorie,
     data: daten.kategorien[kategorie], // nur Tageswerte!
-    borderColor: farben[kategorie],
-    backgroundColor: farben[kategorie].replace(')', ', 0.4)').replace('rgb', 'rgba'),
+    borderColor: farbe,
+    backgroundColor: farbe.replace(')', ', 0.4)').replace('rgb', 'rgba'),
     borderWidth: 1.5,
     fill: true,
     tension: 0.1,
@@ -1394,6 +1461,7 @@ kategorien.forEach((kategorie, i) => {
     pointRadius: 0
   });
 });
+
 
 // Schwarze Gesamtkostenlinie (kumuliert)
 datasets.push({
@@ -1414,37 +1482,40 @@ datasets.push({
       datasets: datasets
     },
     options: {
-      responsive: true,
-      scales: {
-        x: {
-          type: 'time',
-          time: { unit: 'day', tooltipFormat: 'dd.MM.yyyy', displayFormats: { day: 'dd.MM' } },
-          title: { display: true, text: 'Datum' }
-        },
-        y: {
-          beginAtZero: true,
-          stacked: true,
-          title: { display: true, text: 'Kumulierte Ausgaben (€)' }
-        }
-      },
-      plugins: {
-        legend: { position: 'bottom' },
-        tooltip: {
-          mode: 'index',
-          intersect: false,
-          callbacks: {
-            label: ctx => {
-              // ctx.parsed.y kann undefined sein bei nicht-time axes in manchen Chart.js builds
-              const val = (ctx.parsed && ctx.parsed.y !== undefined) ? ctx.parsed.y : ctx.parsed;
-              return `${ctx.dataset.label}: ${Number(val || 0).toFixed(2)} €`;
-            }
-          }
-        }
-      },
-      interaction: { mode: 'nearest', intersect: false }
+  responsive: true,
+  scales: {
+    x: {
+      type: 'time',
+      time: { unit: 'day', tooltipFormat: 'dd.MM.yyyy', displayFormats: { day: 'dd.MM' } },
+      title: { display: true, text: 'Datum' }
+    },
+    y: {
+      beginAtZero: true,
+      stacked: true,
+      title: { display: true, text: 'Kumulierte Ausgaben (€)' }
     }
+  },
+  plugins: {
+  legend: {
+    display: false
+  },
+    tooltip: {
+      mode: 'index',
+      intersect: false,
+      callbacks: {
+        label: ctx => {
+          const val = (ctx.parsed && ctx.parsed.y !== undefined) ? ctx.parsed.y : ctx.parsed;
+          return `${ctx.dataset.label}: ${Number(val || 0).toFixed(2)} €`;
+        }
+      }
+    }
+  },
+  interaction: { mode: 'nearest', intersect: false }
+}
+
   });
 }
+
 
 /* --- Initialisierung & Listener (außerhalb der Funktionen) ------------ */
 document.addEventListener('DOMContentLoaded', () => {
@@ -1467,7 +1538,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 </script>
-
+<div style="height: 20px;"></div>
 
 </div>
 
@@ -1530,6 +1601,7 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
     <!-- Script -->
 <script>
+
 
 function istIntervallFuerDatum(intervall, datum) {
   const tag = datum.getDay();
