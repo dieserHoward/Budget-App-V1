@@ -3115,7 +3115,7 @@ body {
 }
 
 /* Overlay für Popup-Hintergrund */
-#popup-overlay {
+#popup-overlay23 {
   display: none;
   position: fixed;
   top:0; left:0;
@@ -3126,3 +3126,32 @@ body {
 }
 
 /* ======================= Budget freigeben Ende ====================== */
+
+/* Select Button Ausgaben Graphik 2 Start */
+#ausgabenFilter {
+  display: block;
+  margin: 35px auto 20px auto; /* Zentriert + Abstand oben/unten */
+  padding: 8px 16px;
+  font-size: 16px;
+  border-radius: 20px;
+  border: 1.5px solid #999;
+  background-color: #f9f9f9;
+  color: #333;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  width: fit-content;
+  min-width: 220px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23666" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+}
+
+/* Hover-Effekt */
+#ausgabenFilter:hover {
+  background-color: #ececec;
+}
