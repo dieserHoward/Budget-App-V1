@@ -667,7 +667,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 <!-- ========== Statistik-Tab ========== -->
-    <div id="tab-content-statistik">
+   <div id="tab-content-statistik">
       
 <div id="fixed-container-statistik">
       
@@ -748,12 +748,10 @@ function berechneZeitraum(modus, basisDatum) {
   } else if (modus === 'jahr') {
     start.setMonth(0, 1);
     end.setMonth(11, 31);
-    // Entferne oder kommentiere die folgende Zeile aus,
-    // damit end nicht auf aktuellen Monat begrenzt wird:
-    // const heute = new Date();
-    // if (basisDatum.getFullYear() === heute.getFullYear()) {
-    //   end.setMonth(heute.getMonth() + 1, 0);
-    // }
+    const heute = new Date();
+    if (basisDatum.getFullYear() === heute.getFullYear()) {
+      end.setMonth(heute.getMonth() + 1, 0);
+    }
   } else { // Woche
     const diff = basisDatum.getDay() === 0 ? -6 : 1 - basisDatum.getDay();
     start.setDate(start.getDate() + diff);
@@ -764,7 +762,6 @@ function berechneZeitraum(modus, basisDatum) {
   end.setHours(23, 59, 59, 999);
   return { start, end };
 }
-
 
 
 
@@ -800,7 +797,7 @@ function berechneZeitraum(modus, basisDatum) {
 <script>
 
 function berechneUndZeigeUeberschuss(zeitraumStart, zeitraumEnde, modus) {
-  const result = berechneGesamtUeberschuss(zeitraumStart, zeitraumEnde);
+  const result = berechneGesamtUeberschuss(zeitraumStart, zeitraumEnde, modus); 
 
   // Sparsummen (Monatsbasis) aus LocalStorage
   const sparquoten = JSON.parse(localStorage.getItem("sparquoten")) || {};
@@ -843,66 +840,46 @@ function setzeWert(id, betrag) {
 
 // Gesamtüberschuss berechnen
 function berechneGesamtUeberschuss(zeitraumStart, zeitraumEnde, modus) {
+
   const einmalige = JSON.parse(localStorage.getItem("eintraege")) || [];
   const wiederkehrende = JSON.parse(localStorage.getItem("wiederkehrendeEintraege")) || [];
   const toDate = (str) => new Date(str + "T00:00:00");
 
-  let relevanteEintraege = [];
+  let startEinmalige = zeitraumStart;
+  let endEinmalige = zeitraumEnde;
 
   if (modus === "jahr") {
-    // Einmalige Einträge: gesamtes Jahr auswerten
-    const jahrStart = new Date(zeitraumStart.getFullYear(), 0, 1);
-    const jahrEnde = new Date(zeitraumStart.getFullYear(), 11, 31, 23, 59, 59, 999);
-
-    relevanteEintraege.push(
-      ...einmalige.filter(e => {
-        const d = toDate(e.datum);
-        return d >= jahrStart && d <= jahrEnde;
-      })
-    );
-  } else {
-    // Monat/Woche
-    relevanteEintraege.push(
-      ...einmalige.filter(e => {
-        const d = toDate(e.datum);
-        return d >= zeitraumStart && d <= zeitraumEnde;
-      })
-    );
+    // Ganzes Kalenderjahr vom zeitraumStart-Jahr nehmen
+    const jahr = zeitraumStart.getFullYear();
+    startEinmalige = new Date(jahr, 0, 1, 0, 0, 0, 0);
+    endEinmalige = new Date(jahr, 11, 31, 23, 59, 59, 999);
   }
 
-  // Enddatum für wiederkehrende Einträge ermitteln
-  let endDatumWiederkehrende = zeitraumEnde;
+  const relevanteEintraege = [
+    ...einmalige.filter(e => {
+      const d = toDate(e.datum);
+      return d >= startEinmalige && d <= endEinmalige;
+    })
+  ];
 
-if (modus === "jahr") {
-  const heute = new Date();
-  const ausgewertetesJahr = zeitraumStart.getFullYear();
-
-  if (ausgewertetesJahr === heute.getFullYear()) {
-    // Wenn ausgewertetes Jahr das aktuelle Jahr ist,
-    // dann Enddatum = letzter Tag des aktuellen Monats
-    endDatumWiederkehrende = new Date(heute.getFullYear(), heute.getMonth() + 1, 0, 23, 59, 59, 999);
-  } else {
-    // Sonst komplettes Jahr (31.12.)
-    endDatumWiederkehrende = new Date(ausgewertetesJahr, 11, 31, 23, 59, 59, 999);
-  }
-}
-
-
-  // Wiederkehrende Einträge generieren
+  // Wiederkehrende berücksichtigen (bis zeitraumEnde, also aktueller Monat im Jahr)
   wiederkehrende.forEach(e => {
     const start = toDate(e.start);
     const ende = toDate(e.ende);
     const betrag = parseFloat(e.betrag);
 
     let lauf = new Date(zeitraumStart);
-
-while (lauf <= endDatumWiederkehrende) {
-  if (lauf >= start && lauf <= ende && istIntervallFuerDatum(e.intervall, lauf)) {
-    relevanteEintraege.push({ /*...*/ });
-  }
-  lauf.setDate(lauf.getDate() + 1);
-}
-
+    while (lauf <= zeitraumEnde) {
+      if (lauf >= start && lauf <= ende && istIntervallFuerDatum(e.intervall, lauf)) {
+        relevanteEintraege.push({
+          typ: e.typ,
+          betrag,
+          kategorie: e.kategorie,
+          datum: lauf.toISOString().split("T")[0]
+        });
+      }
+      lauf.setDate(lauf.getDate() + 1);
+    }
   });
 
   // Summen berechnen
@@ -921,9 +898,6 @@ while (lauf <= endDatumWiederkehrende) {
     ueberschuss: einnahmen - ausgaben - investitionen
   };
 }
-
-
-
 
 
 document.addEventListener("DOMContentLoaded", () => {
