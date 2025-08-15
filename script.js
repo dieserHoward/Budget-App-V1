@@ -529,7 +529,9 @@ function activateTab(tabName) {
 // ------- Automatisch erster Tab auswählen (Kalender) -------
 document.addEventListener("DOMContentLoaded", () => {
   activateTab("kalender");
+  renderKalender(); // zweiter Aufruf, jetzt mit gesetzten Variablen
 });
+
 
 // -------------------- EVENTLISTENER REGISTRIEREN --------------------
 Object.keys(tabs).forEach(tabName => {
@@ -2074,72 +2076,16 @@ ladeStatistikGraph();
 // Statistik 1
 
 // STATISTIK: Balkendiagramm mit Canvas
-  function zeichneStatistik() {
-  const canvas = document.getElementById("chart");
-  const ctx = canvas.getContext("2d");
+function zeichneStatistik() {
+  const canvas = document.getElementById("chart-einnahmen-pie");
 
-  // Einträge & Gruppen aus localStorage laden
-  const eintraege = JSON.parse(localStorage.getItem("eintraege")) || [];
-  const gruppen = JSON.parse(localStorage.getItem("kategorieGruppen")) || { einnahme: [], ausgabe: [] };
-  const aktuelleTyp = "einnahme"; // oder "ausgabe", je nach Tab
-
-  const gruppenListe = gruppen[aktuelleTyp];
-
-  // Gruppen-Daten berechnen: Summe aller Einträge in den Gruppenkategorien
-  const gruppenMitSummen = gruppenListe.map(gruppe => {
-    const summe = gruppe.items.reduce((acc, kategorieName) => {
-      const kategorieSumme = eintraege
-        .filter(e => e.kategorie === kategorieName && e.typ === aktuelleTyp)
-        .reduce((sum, e) => sum + parseFloat(e.betrag), 0);
-      return acc + kategorieSumme;
-    }, 0);
-    return { name: gruppe.name, summe };
-  }).filter(gr => gr.summe > 0);
-
-  // Falls keine Daten vorhanden
-  if (gruppenMitSummen.length === 0) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.font = "16px Arial";
-    ctx.fillText("Keine Daten vorhanden", 10, 50);
+  // Wenn Canvas nicht vorhanden oder wenn Chart.js diesen Bereich nutzt → abbrechen
+  if (!canvas || canvas.dataset.chartjs === "true") {
     return;
   }
 
-  // Gesamtsumme berechnen
-  const gesamt = gruppenMitSummen.reduce((sum, g) => sum + g.summe, 0);
+  const ctx = canvas.getContext("2d");
 
-  // Farben
-  const farben = ["#36A2EB", "#FF6384", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40"];
-
-  // Kreis-Parameter
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const cx = canvas.width / 2;
-  const cy = canvas.height / 2;
-  const radius = Math.min(canvas.width, canvas.height) / 2 - 50;
-
-  let startWinkel = 0;
-  gruppenMitSummen.forEach((gruppe, i) => {
-    const anteil = gruppe.summe / gesamt;
-    const endWinkel = startWinkel + anteil * 2 * Math.PI;
-
-    // Segment zeichnen
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.arc(cx, cy, radius, startWinkel, endWinkel);
-    ctx.closePath();
-    ctx.fillStyle = farben[i % farben.length];
-    ctx.fill();
-
-    // Beschriftung
-    const mittelWinkel = (startWinkel + endWinkel) / 2;
-    const textX = cx + Math.cos(mittelWinkel) * (radius + 20);
-    const textY = cy + Math.sin(mittelWinkel) * (radius + 20);
-    ctx.fillStyle = "#000";
-    ctx.font = "14px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText(gruppe.name, textX, textY);
-
-    startWinkel = endWinkel;
-  });
 }
 
 
