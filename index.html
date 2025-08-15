@@ -16,11 +16,14 @@
 
 
 
+<!---========================= HIER HTML ===========================-->
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -36,6 +39,7 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <div class="status-bar-fix"></div>
 <div id="app">
 
 
@@ -803,6 +807,8 @@ function berechneZeitraum(modus, basisDatum) {
     <li><span>4. Nach langfristigem Sparen:</span> <strong id="stufe4">0 €</strong></li>
   </ul>
 </div>
+<canvas id="budget-pie-chart" width="300" height="300"></canvas>
+<div id="budget-pie-legend"></div>
 
 </div>  
 <div id="chart-ausgaben" class="chart-section" style="display: none;">
@@ -1312,6 +1318,7 @@ function updateAusgabenAnzeige() {
 
   // Falls vorhanden: kumulierte Ausgaben aktualisieren
   zeichneAusgabenKumuliert(start, end);
+  zeichneBudgetKuchen(start, end);
 }
 
 
@@ -1962,6 +1969,156 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 <!-- ===================== Graph 2 für Einnahmen Ende ========-->
+
+<!-- ===================== Graph 1 für Budget Start ========-->
+<script>
+let budgetChart = null;
+
+function ladeBudgetDatenMitKategorien(start, ende) {
+  const eintraege = JSON.parse(localStorage.getItem("eintraege")) || [];
+  const wiederkehrende = JSON.parse(localStorage.getItem("wiederkehrendeEintraege")) || [];
+  const toDate = (str) => new Date(str + "T00:00:00");
+
+  let einnahmen = 0;
+  let ausgabenDetails = {};
+  let investDetails = {};
+  let investitionen = 0;
+  let ausgaben = 0;
+
+  // --- Einmalige Einträge ---
+  eintraege.forEach(e => {
+    const d = toDate(e.datum);
+    if (d >= start && d <= ende) {
+      if (e.typ === "einnahme") einnahmen += parseFloat(e.betrag);
+      if (e.typ === "ausgabe") {
+        ausgaben += parseFloat(e.betrag);
+        const cat = istSortierModusAktiv() ? findeOberkategorie(e.kategorie, "ausgabe") : e.kategorie;
+        ausgabenDetails[cat] = (ausgabenDetails[cat] || 0) + parseFloat(e.betrag);
+      }
+      if (e.typ === "investition") {
+        investitionen += parseFloat(e.betrag);
+        const cat = istSortierModusAktiv() ? findeOberkategorie(e.kategorie, "investition") : e.kategorie;
+        investDetails[cat] = (investDetails[cat] || 0) + parseFloat(e.betrag);
+      }
+    }
+  });
+
+  // --- Wiederkehrende Einträge ---
+  wiederkehrende.forEach(e => {
+    const startW = toDate(e.start);
+    const endeW = toDate(e.ende);
+    let lauf = new Date(start);
+    while (lauf <= ende) {
+      if (lauf >= startW && lauf <= endeW && istIntervallFuerDatum(e.intervall, lauf)) {
+        if (e.typ === "einnahme") einnahmen += parseFloat(e.betrag);
+        if (e.typ === "ausgabe") {
+          ausgaben += parseFloat(e.betrag);
+          const cat = istSortierModusAktiv() ? findeOberkategorie(e.kategorie, "ausgabe") : e.kategorie;
+          ausgabenDetails[cat] = (ausgabenDetails[cat] || 0) + parseFloat(e.betrag);
+        }
+        if (e.typ === "investition") {
+          investitionen += parseFloat(e.betrag);
+          const cat = istSortierModusAktiv() ? findeOberkategorie(e.kategorie, "investition") : e.kategorie;
+          investDetails[cat] = (investDetails[cat] || 0) + parseFloat(e.betrag);
+        }
+      }
+      lauf.setDate(lauf.getDate() + 1);
+    }
+  });
+
+  const sparUeberschuss = einnahmen - ausgaben - investitionen;
+
+  // Innenring (Hauptbereiche)
+  const innenLabels = ["Ausgaben", "Investitionen", "Sparüberschuss"];
+  const innenWerte = [ausgaben, investitionen, sparUeberschuss];
+  const innenFarben = ["#ff7f0e", "#2ca02c", "#1f77b4"];
+
+  // Außenring (Kategorien)
+  const aussenLabels = [
+    ...Object.keys(ausgabenDetails),
+    ...Object.keys(investDetails),
+    "Sparüberschuss"
+  ];
+  const aussenWerte = [
+    ...Object.values(ausgabenDetails),
+    ...Object.values(investDetails),
+    sparUeberschuss
+  ];
+  const aussenFarben = [
+    ...Object.keys(ausgabenDetails).map(c => getFarbeFuerKategorie(c)),
+    ...Object.keys(investDetails).map(c => getFarbeFuerKategorie(c)),
+    "#1f77b4"
+  ];
+
+  return { innenLabels, innenWerte, innenFarben, aussenLabels, aussenWerte, aussenFarben };
+}
+
+function zeichneBudgetKuchen(start, ende) {
+  const { innenLabels, innenWerte, innenFarben, aussenLabels, aussenWerte, aussenFarben } =
+    ladeBudgetDatenMitKategorien(start, ende);
+
+  const ctx = document.getElementById('budget-pie-chart').getContext('2d');
+  if (budgetChart) budgetChart.destroy();
+
+  budgetChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: aussenLabels,
+      datasets: [
+        {
+          label: 'Hauptbereiche',
+          data: innenWerte,
+          backgroundColor: innenFarben,
+          borderColor: '#000',
+          borderWidth: 3,
+          circumference: 360,
+          radius: '60%',
+          cutout: '40%'
+        },
+        {
+          label: 'Kategorien',
+          data: aussenWerte,
+          backgroundColor: aussenFarben,
+          borderColor: '#fff',
+          borderWidth: 1,
+          circumference: 360,
+          radius: '100%',
+          cutout: '60%'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.parsed || 0;
+              const sum = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percent = sum ? (value / sum * 100).toFixed(1) : 0;
+              return `${label}: ${value.toFixed(2)} € (${percent}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+
+
+
+</script>
+
+
+
+<!-- ===================== Graph 1 für Budget Ende ========-->
+
+
+
+
 </div>
 
 <!-- ======================================= Statistik-Tab Ende ======================================= -->
