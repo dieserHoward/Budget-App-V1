@@ -2375,7 +2375,7 @@ button.sort-tab.investition.active {
   }
 
   #scroll-content-statistik {
-    margin-top: 145px; /* +30px, wenn du initial mit 200px arbeitest */
+    margin-top: 125px; /* +30px, wenn du initial mit 200px arbeitest */
   }
 }
 
