@@ -1458,7 +1458,7 @@ fertig */
 }
 @media (max-width: 768px) {
   #scroll-content {
-    margin-top: 320px; /* weniger Abstand nach oben auf Handys */
+    margin-top: 312px; /* weniger Abstand nach oben auf Handys */
   }
 }
 
