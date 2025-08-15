@@ -23,6 +23,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-status-bar-style" content="white">
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -782,7 +784,7 @@ function berechneZeitraum(modus, basisDatum) {
   <div id="chart-einnahmen" class="chart-section">
     
     <canvas id="chart" width="700" height="300" style="border:none; border-radius:6px;"></canvas>
-    <label for="einnahmenFilter">Filter Einnahmen:</label>
+    <label for="einnahmenFilter"></label>
   <select id="einnahmenFilter">
     <option value="alle-e">Alle</option>
     <option value="einmalig-e" selected>Einmalige</option>
