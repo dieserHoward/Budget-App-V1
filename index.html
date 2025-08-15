@@ -1034,6 +1034,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const { start, end } = berechneZeitraum(statistikModus, statistikDatum);
 berechneUndZeigeUeberschuss(start, end, statistikModus);
 zeichneAusgabenKuchen(start, end); // <-- Hier ergänzen
+zeichneBudgetKuchen(start, end, statistikModus); // <— hier dazu
 
 
   // Buttons (Woche/Monat/Jahr)
@@ -1319,6 +1320,7 @@ function updateAusgabenAnzeige() {
   // Falls vorhanden: kumulierte Ausgaben aktualisieren
   zeichneAusgabenKumuliert(start, end);
   zeichneBudgetKuchen(start, end);
+  zeichneBudgetKuchen(start, end, statistikModus);
 }
 
 
@@ -1974,7 +1976,70 @@ document.addEventListener('DOMContentLoaded', () => {
 <script>
 let budgetChart = null;
 
-function ladeBudgetDatenMitKategorien(start, ende) {
+/** kleine Helfer für Farb-Abstufungen ohne extra Lib */
+function lightenHex(hex, percent) {
+  const num = parseInt(hex.replace('#',''),16);
+  let r = (num>>16)&255, g = (num>>8)&255, b = num&255;
+  const f = percent/100;
+  r = Math.round(r + (255 - r) * f);
+  g = Math.round(g + (255 - g) * f);
+  b = Math.round(b + (255 - b) * f);
+  const toHex = v => v.toString(16).padStart(2,'0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+/** holt die 4 Stufen aus deiner bestehenden Logik – aber charttauglich (keine negativen Segmente) */
+function holeSparVariantenAnteile(start, ende, modus) {
+  // Basiswerte wie im Überschuss-Analysekasten:
+  const result = berechneGesamtUeberschuss(start, ende, modus);
+
+  const sparquoten = JSON.parse(localStorage.getItem("sparquoten")) || {};
+  let kurz = parseFloat(sparquoten.kurzSumme) || 0;
+  let mittel = parseFloat(sparquoten.mittelSumme) || 0; // Urlaub
+  let lang = parseFloat(sparquoten.langSumme) || 0;
+
+  const freigabe = JSON.parse(localStorage.getItem('ruecklagenFreigabe')) || { kurz: 0, urlaub: 0, lang: 0 };
+
+  if (modus === "jahr") {
+    const heute = new Date();
+    const anzahlMonate = (ende.getFullYear() === heute.getFullYear()) ? (heute.getMonth() + 1) : 12;
+    kurz *= anzahlMonate;
+    mittel *= anzahlMonate;
+    lang *= anzahlMonate;
+
+    // Freigaben als Abzug berücksichtigen (wie in deinem Kasten)
+    kurz -= freigabe.kurz || 0;
+    mittel -= freigabe.urlaub || 0;
+    lang -= freigabe.lang || 0;
+  }
+
+  // Stufen wie bei dir:
+  const stufe1 = result.ueberschuss;
+  const stufe2 = stufe1 - kurz;
+  const stufe3 = stufe2 - mittel;
+  const stufe4 = stufe3 - lang;
+
+  // Für den Außenring brauchen wir NICHT die kumulativen Stufen,
+  // sondern die "Anteile" jeder Stufe innerhalb des (nicht-negativen) Überschusses:
+  const s1 = Math.max(0, stufe1);
+  const s2 = Math.max(0, stufe2);
+  const s3 = Math.max(0, stufe3);
+  const s4 = Math.max(0, stufe4);
+
+  // Differenzen bilden (so summieren die Teile wieder zu Stufe1):
+  const anteilStufe1 = Math.max(0, s1 - s2); // „Basis-Überschuss“ vor kurz
+  const anteilStufe2 = Math.max(0, s2 - s3); // nach kurz
+  const anteilStufe3 = Math.max(0, s3 - s4); // nach urlaub/mittel
+  const anteilStufe4 = Math.max(0, s4);      // nach lang
+
+  return {
+    stufe1, stufe2, stufe3, stufe4,                   // original (falls du sie brauchst)
+    anteile: [anteilStufe1, anteilStufe2, anteilStufe3, anteilStufe4]
+  };
+}
+
+/** Deine bisherige Funktion – erweitert um Spar-Varianten außen + modus */
+function ladeBudgetDatenMitKategorien(start, ende, modus) {
   const eintraege = JSON.parse(localStorage.getItem("eintraege")) || [];
   const wiederkehrende = JSON.parse(localStorage.getItem("wiederkehrendeEintraege")) || [];
   const toDate = (str) => new Date(str + "T00:00:00");
@@ -1989,37 +2054,39 @@ function ladeBudgetDatenMitKategorien(start, ende) {
   eintraege.forEach(e => {
     const d = toDate(e.datum);
     if (d >= start && d <= ende) {
-      if (e.typ === "einnahme") einnahmen += parseFloat(e.betrag);
+      const betrag = parseFloat(e.betrag);
+      if (e.typ === "einnahme") einnahmen += betrag;
       if (e.typ === "ausgabe") {
-        ausgaben += parseFloat(e.betrag);
-        const cat = istSortierModusAktiv() ? findeOberkategorie(e.kategorie, "ausgabe") : e.kategorie;
-        ausgabenDetails[cat] = (ausgabenDetails[cat] || 0) + parseFloat(e.betrag);
+        ausgaben += betrag;
+        const cat = istSortierModusAktiv() ? findeOberkategorie(e.kategorie, "ausgabe") : e.kategorie || "Sonstiges";
+        ausgabenDetails[cat] = (ausgabenDetails[cat] || 0) + betrag;
       }
       if (e.typ === "investition") {
-        investitionen += parseFloat(e.betrag);
-        const cat = istSortierModusAktiv() ? findeOberkategorie(e.kategorie, "investition") : e.kategorie;
-        investDetails[cat] = (investDetails[cat] || 0) + parseFloat(e.betrag);
+        investitionen += betrag;
+        const cat = istSortierModusAktiv() ? findeOberkategorie(e.kategorie, "investition") : e.kategorie || "Sonstiges";
+        investDetails[cat] = (investDetails[cat] || 0) + betrag;
       }
     }
   });
 
-  // --- Wiederkehrende Einträge ---
+  // --- Wiederkehrende Einträge (inkl. evtl. Investitionen) ---
   wiederkehrende.forEach(e => {
     const startW = toDate(e.start);
     const endeW = toDate(e.ende);
     let lauf = new Date(start);
     while (lauf <= ende) {
       if (lauf >= startW && lauf <= endeW && istIntervallFuerDatum(e.intervall, lauf)) {
-        if (e.typ === "einnahme") einnahmen += parseFloat(e.betrag);
+        const betrag = parseFloat(e.betrag);
+        if (e.typ === "einnahme") einnahmen += betrag;
         if (e.typ === "ausgabe") {
-          ausgaben += parseFloat(e.betrag);
-          const cat = istSortierModusAktiv() ? findeOberkategorie(e.kategorie, "ausgabe") : e.kategorie;
-          ausgabenDetails[cat] = (ausgabenDetails[cat] || 0) + parseFloat(e.betrag);
+          ausgaben += betrag;
+          const cat = istSortierModusAktiv() ? findeOberkategorie(e.kategorie, "ausgabe") : e.kategorie || "Sonstiges";
+          ausgabenDetails[cat] = (ausgabenDetails[cat] || 0) + betrag;
         }
         if (e.typ === "investition") {
-          investitionen += parseFloat(e.betrag);
-          const cat = istSortierModusAktiv() ? findeOberkategorie(e.kategorie, "investition") : e.kategorie;
-          investDetails[cat] = (investDetails[cat] || 0) + parseFloat(e.betrag);
+          investitionen += betrag;
+          const cat = istSortierModusAktiv() ? findeOberkategorie(e.kategorie, "investition") : e.kategorie || "Sonstiges";
+          investDetails[cat] = (investDetails[cat] || 0) + betrag;
         }
       }
       lauf.setDate(lauf.getDate() + 1);
@@ -2027,35 +2094,50 @@ function ladeBudgetDatenMitKategorien(start, ende) {
   });
 
   const sparUeberschuss = einnahmen - ausgaben - investitionen;
+  const sparInnen = Math.max(0, sparUeberschuss); // Pie/Doughnut kann keine negativen Werte
+
+  // Farben für Innenring
+  const farbenHaupt = { ausgaben: "#ff7f0e", investitionen: "#2ca02c", spar: "#1f77b4" };
 
   // Innenring (Hauptbereiche)
   const innenLabels = ["Ausgaben", "Investitionen", "Sparüberschuss"];
-  const innenWerte = [ausgaben, investitionen, sparUeberschuss];
-  const innenFarben = ["#ff7f0e", "#2ca02c", "#1f77b4"];
+  const innenWerte  = [ausgaben, investitionen, sparInnen];
+  const innenFarben = [farbenHaupt.ausgaben, farbenHaupt.investitionen, farbenHaupt.spar];
 
-  // Außenring (Kategorien)
+  // Außenring (Kategorien + 4 Sparvarianten)
+  const sparParts = holeSparVariantenAnteile(start, ende, modus).anteile; // 4 Anteile, alle >= 0
+
   const aussenLabels = [
     ...Object.keys(ausgabenDetails),
     ...Object.keys(investDetails),
-    "Sparüberschuss"
+    "Überschuss – Stufe 1 (Basis)",
+    "Überschuss – Stufe 2 (nach Kurz)",
+    "Überschuss – Stufe 3 (nach Urlaub)",
+    "Überschuss – Stufe 4 (nach Lang)"
   ];
+
   const aussenWerte = [
     ...Object.values(ausgabenDetails),
     ...Object.values(investDetails),
-    sparUeberschuss
+    ...sparParts
   ];
+
   const aussenFarben = [
-    ...Object.keys(ausgabenDetails).map(c => getFarbeFuerKategorie(c)),
-    ...Object.keys(investDetails).map(c => getFarbeFuerKategorie(c)),
-    "#1f77b4"
+    ...Object.keys(ausgabenDetails).map(k => getFarbeFuerKategorie(k)),              // deine Kategoriefarben
+    ...Object.keys(investDetails).map(k => getFarbeFuerKategorie(k)),                // dito
+    lightenHex(farbenHaupt.spar, 10),
+    lightenHex(farbenHaupt.spar, 22),
+    lightenHex(farbenHaupt.spar, 34),
+    lightenHex(farbenHaupt.spar, 46)
   ];
 
   return { innenLabels, innenWerte, innenFarben, aussenLabels, aussenWerte, aussenFarben };
 }
 
-function zeichneBudgetKuchen(start, ende) {
+/** Chart-Zeichnung – jetzt mit modus */
+function zeichneBudgetKuchen(start, ende, modus) {
   const { innenLabels, innenWerte, innenFarben, aussenLabels, aussenWerte, aussenFarben } =
-    ladeBudgetDatenMitKategorien(start, ende);
+    ladeBudgetDatenMitKategorien(start, ende, modus);
 
   const ctx = document.getElementById('budget-pie-chart').getContext('2d');
   if (budgetChart) budgetChart.destroy();
@@ -2063,7 +2145,7 @@ function zeichneBudgetKuchen(start, ende) {
   budgetChart = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: aussenLabels,
+      labels: aussenLabels, // für Tooltip des Außenrings
       datasets: [
         {
           label: 'Hauptbereiche',
@@ -2071,19 +2153,19 @@ function zeichneBudgetKuchen(start, ende) {
           backgroundColor: innenFarben,
           borderColor: '#000',
           borderWidth: 3,
-          circumference: 360,
           radius: '60%',
-          cutout: '40%'
+          cutout: '40%',
+          hoverOffset: 8
         },
         {
-          label: 'Kategorien',
+          label: 'Kategorien & Sparvarianten',
           data: aussenWerte,
           backgroundColor: aussenFarben,
           borderColor: '#fff',
-          borderWidth: 1,
-          circumference: 360,
+          borderWidth: 2,
           radius: '100%',
-          cutout: '60%'
+          cutout: '60%',
+          hoverOffset: 6
         }
       ]
     },
@@ -2105,6 +2187,34 @@ function zeichneBudgetKuchen(start, ende) {
       }
     }
   });
+
+  // Optional: schicke Legende unter dem Chart (mit Prozenten)
+  const legendDiv = document.getElementById('budget-pie-legend');
+  if (legendDiv) {
+    legendDiv.innerHTML = '';
+    const sum = aussenWerte.reduce((a,b) => a + b, 0);
+    aussenLabels.forEach((label, i) => {
+  if (aussenWerte[i] <= 0) return; // nur sinnvolle Einträge
+  const item = document.createElement('div');
+  item.style.display = 'flex';
+  item.style.alignItems = 'center';
+  item.style.gap = '8px';
+  item.style.fontSize = '14px';
+  item.style.marginBottom = '4px'; // <-- hier der Abstand zwischen Zeilen
+  const box = document.createElement('span');
+  box.style.width = '16px';
+  box.style.height = '16px';
+  box.style.borderRadius = '3px';
+  box.style.backgroundColor = aussenFarben[i];
+  const text = document.createElement('span');
+  const pct = sum ? ((aussenWerte[i] / sum) * 100).toFixed(1) : '0.0';
+  text.textContent = `${label}: ${pct}%`;
+  item.appendChild(box);
+  item.appendChild(text);
+  legendDiv.appendChild(item);
+});
+
+  }
 }
 
 
