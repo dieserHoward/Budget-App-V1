@@ -2073,63 +2073,80 @@ function ladeBudgetDatenMitKategorien(start, ende, modus) {
   wiederkehrende.forEach(e => {
     const startW = toDate(e.start);
     const endeW = toDate(e.ende);
-    let lauf = new Date(start);
-    while (lauf <= ende) {
-      if (lauf >= startW && lauf <= endeW && istIntervallFuerDatum(e.intervall, lauf)) {
-        const betrag = parseFloat(e.betrag);
-        if (e.typ === "einnahme") einnahmen += betrag;
-        if (e.typ === "ausgabe") {
-          ausgaben += betrag;
-          const cat = istSortierModusAktiv() ? findeOberkategorie(e.kategorie, "ausgabe") : e.kategorie || "Sonstiges";
-          ausgabenDetails[cat] = (ausgabenDetails[cat] || 0) + betrag;
-        }
-        if (e.typ === "investition") {
-          investitionen += betrag;
-          const cat = istSortierModusAktiv() ? findeOberkategorie(e.kategorie, "investition") : e.kategorie || "Sonstiges";
-          investDetails[cat] = (investDetails[cat] || 0) + betrag;
-        }
-      }
-      lauf.setDate(lauf.getDate() + 1);
+
+    // Ende auf das aktuelle Monat begrenzen, falls modus "jahr"
+    let effektivesEnde = ende;
+    if (modus === "jahr" && ende > aktuellerMonatEnde) {
+        effektivesEnde = aktuellerMonatEnde;
     }
-  });
+
+    let lauf = new Date(start);
+    while (lauf <= effektivesEnde) {
+        if (lauf >= startW && lauf <= endeW && istIntervallFuerDatum(e.intervall, lauf)) {
+            const betrag = parseFloat(e.betrag);
+            if (e.typ === "einnahme") einnahmen += betrag;
+            if (e.typ === "ausgabe") {
+                ausgaben += betrag;
+                const cat = istSortierModusAktiv() ? findeOberkategorie(e.kategorie, "ausgabe") : e.kategorie || "Sonstiges";
+                ausgabenDetails[cat] = (ausgabenDetails[cat] || 0) + betrag;
+            }
+            if (e.typ === "investition") {
+                investitionen += betrag;
+                const cat = istSortierModusAktiv() ? findeOberkategorie(e.kategorie, "investition") : e.kategorie || "Sonstiges";
+                investDetails[cat] = (investDetails[cat] || 0) + betrag;
+            }
+        }
+        lauf.setDate(lauf.getDate() + 1);
+    }
+});
+
 
   const sparUeberschuss = einnahmen - ausgaben - investitionen;
   const sparInnen = Math.max(0, sparUeberschuss); // Pie/Doughnut kann keine negativen Werte
 
   // Farben für Innenring
-  const farbenHaupt = { ausgaben: "#ff7f0e", investitionen: "#2ca02c", spar: "#1f77b4" };
+  // Farben für Innenring
+const farbenHaupt = { 
+  ausgaben: "#ff4d4d",      // rot
+  investitionen: "#a64dff", // lila
+  spar: "#66cc88"           // sanftes grün
+};
 
-  // Innenring (Hauptbereiche)
-  const innenLabels = ["Ausgaben", "Investitionen", "Sparüberschuss"];
-  const innenWerte  = [ausgaben, investitionen, sparInnen];
-  const innenFarben = [farbenHaupt.ausgaben, farbenHaupt.investitionen, farbenHaupt.spar];
+// Innenring (Hauptbereiche)
+const innenLabels = ["Ausgaben", "Investitionen", "Sparüberschuss"];
+const innenWerte  = [ausgaben, investitionen, sparInnen];
+const innenFarben = [farbenHaupt.ausgaben, farbenHaupt.investitionen, farbenHaupt.spar];
+
 
   // Außenring (Kategorien + 4 Sparvarianten)
-  const sparParts = holeSparVariantenAnteile(start, ende, modus).anteile; // 4 Anteile, alle >= 0
+  // --- Außenring (Kategorien + 4 Sparvarianten) sortiert innerhalb der Blöcke ---
+const sparParts = holeSparVariantenAnteile(start, ende, modus).anteile; // 4 Anteile, alle >= 0
 
-  const aussenLabels = [
-    ...Object.keys(ausgabenDetails),
-    ...Object.keys(investDetails),
-    "Überschuss – Stufe 1 (Basis)",
-    "Überschuss – Stufe 2 (nach Kurz)",
-    "Überschuss – Stufe 3 (nach Urlaub)",
-    "Überschuss – Stufe 4 (nach Lang)"
-  ];
+// Hilfsfunktion: sortiert Object.entries nach Wert absteigend
+const sortiereNachWertDesc = (obj) => Object.entries(obj).sort((a,b) => b[1] - a[1]);
 
-  const aussenWerte = [
-    ...Object.values(ausgabenDetails),
-    ...Object.values(investDetails),
-    ...sparParts
-  ];
+const ausgabenBlock = sortiereNachWertDesc(ausgabenDetails);
+const investBlock   = sortiereNachWertDesc(investDetails);
+const sparBlock     = sparParts.map((wert,i) => [`Überschuss – Stufe ${i+1}`, wert]);
 
-  const aussenFarben = [
-    ...Object.keys(ausgabenDetails).map(k => getFarbeFuerKategorie(k)),              // deine Kategoriefarben
-    ...Object.keys(investDetails).map(k => getFarbeFuerKategorie(k)),                // dito
-    lightenHex(farbenHaupt.spar, 10),
-    lightenHex(farbenHaupt.spar, 22),
-    lightenHex(farbenHaupt.spar, 34),
-    lightenHex(farbenHaupt.spar, 46)
-  ];
+const aussenLabels = [
+  ...ausgabenBlock.map(e => e[0]),
+  ...investBlock.map(e => e[0]),
+  ...sparBlock.map(e => e[0])
+];
+
+const aussenWerte = [
+  ...ausgabenBlock.map(e => e[1]),
+  ...investBlock.map(e => e[1]),
+  ...sparBlock.map(e => e[1])
+];
+
+const aussenFarben = [
+  ...ausgabenBlock.map(e => getFarbeFuerKategorie(e[0])),
+  ...investBlock.map(e => getFarbeFuerKategorie(e[0])),
+  ...[10,22,34,46].map(p => lightenHex(farbenHaupt.spar, p))
+];
+
 
   return { innenLabels, innenWerte, innenFarben, aussenLabels, aussenWerte, aussenFarben };
 }
@@ -2142,51 +2159,54 @@ function zeichneBudgetKuchen(start, ende, modus) {
   const ctx = document.getElementById('budget-pie-chart').getContext('2d');
   if (budgetChart) budgetChart.destroy();
 
-  budgetChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: aussenLabels, // für Tooltip des Außenrings
-      datasets: [
-        {
-          label: 'Hauptbereiche',
-          data: innenWerte,
-          backgroundColor: innenFarben,
-          borderColor: '#000',
-          borderWidth: 3,
-          radius: '60%',
-          cutout: '40%',
-          hoverOffset: 8
-        },
-        {
-          label: 'Kategorien & Sparvarianten',
-          data: aussenWerte,
-          backgroundColor: aussenFarben,
-          borderColor: '#fff',
-          borderWidth: 2,
-          radius: '100%',
-          cutout: '60%',
-          hoverOffset: 6
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              const label = context.label || '';
-              const value = context.parsed || 0;
-              const sum = context.dataset.data.reduce((a, b) => a + b, 0);
-              const percent = sum ? (value / sum * 100).toFixed(1) : 0;
-              return `${label}: ${value.toFixed(2)} € (${percent}%)`;
-            }
+ budgetChart = new Chart(ctx, {
+  type: 'doughnut',
+  data: {
+    datasets: [
+      {
+        label: 'Hauptbereiche',
+        data: innenWerte,
+        backgroundColor: innenFarben,
+        borderColor: '#000',
+        borderWidth: 3,
+        radius: '60%',
+        cutout: '40%',
+        hoverOffset: 8,
+        labels: innenLabels // <--- eigene Labels nur für den Innenring
+      },
+      {
+        label: 'Kategorien & Sparvarianten',
+        data: aussenWerte,
+        backgroundColor: aussenFarben,
+        borderColor: '#fff',
+        borderWidth: 2,
+        radius: '100%',
+        cutout: '60%',
+        hoverOffset: 6,
+        labels: aussenLabels // <--- eigene Labels nur für den Außenring
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            const dsLabels = context.dataset.labels || [];
+            const label = dsLabels[context.dataIndex] || '';
+            const value = context.parsed || 0;
+            const sum = context.dataset.data.reduce((a, b) => a + b, 0);
+            const percent = sum ? (value / sum * 100).toFixed(1) : 0;
+            return `${label}: ${value.toFixed(2)} € (${percent}%)`;
           }
         }
       }
     }
-  });
+  }
+});
+
 
   // Optional: schicke Legende unter dem Chart (mit Prozenten)
   const legendDiv = document.getElementById('budget-pie-legend');
@@ -2217,6 +2237,16 @@ function zeichneBudgetKuchen(start, ende, modus) {
   }
 }
 
+// Farben für Innenring (Hauptbereiche)
+const farbenHaupt = { 
+  ausgaben: "#ff4d4d",      // rot
+  investitionen: "#a64dff", // lila
+  spar: "#4dff88"           // grün
+};
+
+const innenLabels = ["Ausgaben", "Investitionen", "Sparüberschuss"];
+const innenWerte  = [ausgaben, investitionen, sparInnen];
+const innenFarben = [farbenHaupt.ausgaben, farbenHaupt.investitionen, farbenHaupt.spar];
 
 
 
