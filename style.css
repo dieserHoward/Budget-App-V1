@@ -1456,7 +1456,11 @@ fertig */
   margin-top: 360px; /* <--- Anpassen je nach tatsächlicher Höhe vom fixierten Bereich */
   padding: 1rem;
 }
-
+@media (max-width: 768px) {
+  #scroll-content {
+    margin-top: 100px; /* weniger Abstand nach oben auf Handys */
+  }
+}
 
 
 
@@ -2371,7 +2375,7 @@ button.sort-tab.investition.active {
   }
 
   #scroll-content-statistik {
-    margin-top: 175px; /* +30px, wenn du initial mit 200px arbeitest */
+    margin-top: 145px; /* +30px, wenn du initial mit 200px arbeitest */
   }
 }
 
@@ -2594,7 +2598,7 @@ button.sort-tab.investition.active {
   }
 
   #scroll-content-uebersicht {
-    margin-top: 185px; /* +30px, wenn du initial mit 200px arbeitest */
+    margin-top: 155px; /* +30px, wenn du initial mit 200px arbeitest */
   }
 }
 
@@ -2725,7 +2729,7 @@ body {
     height: 100%;
     min-height: unset; /* verhindert Überlaufen */
     box-sizing: border-box;
-    margin-top: -25px; /* Platz für den fixierten Header */
+    margin-top: -75px; /* Platz für den fixierten Header */
 }
 
 /* Notizfeld */
@@ -3237,3 +3241,4 @@ html, body {
   padding-right: env(safe-area-inset-right);
   padding-bottom: env(safe-area-inset-bottom);
 }
+
