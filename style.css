@@ -2594,7 +2594,7 @@ button.sort-tab.investition.active {
 
 @media (max-width: 768px) {
   #fixed-container-uebersicht {
-    margin-top: 55px; /* statt 55px → +30px auf dem Handy */
+    margin-top: 75px; /* statt 55px → +30px auf dem Handy */
   }
 
   #scroll-content-uebersicht {
