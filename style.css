@@ -3225,3 +3225,15 @@ body {
 .chart-section > canvas + .chart-legend {
   margin-bottom: 20px;
 }
+
+
+
+
+/* Notch ist nicht durchsichtig */
+html, body {
+  background-color: white; /* gewünschte Farbe */
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+}
