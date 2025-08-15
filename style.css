@@ -2594,11 +2594,11 @@ button.sort-tab.investition.active {
 
 @media (max-width: 768px) {
   #fixed-container-uebersicht {
-    margin-top: 75px; /* statt 55px → +30px auf dem Handy */
+    margin-top: 95px; /* statt 55px → +30px auf dem Handy */
   }
 
   #scroll-content-uebersicht {
-    margin-top: 155px; /* +30px, wenn du initial mit 200px arbeitest */
+    margin-top: 150px; /* +30px, wenn du initial mit 200px arbeitest */
   }
 }
 
