@@ -1458,7 +1458,7 @@ fertig */
 }
 @media (max-width: 768px) {
   #scroll-content {
-    margin-top: 312px; /* weniger Abstand nach oben auf Handys */
+    margin-top: 310px; /* weniger Abstand nach oben auf Handys */
   }
 }
 
@@ -2594,7 +2594,7 @@ button.sort-tab.investition.active {
 
 @media (max-width: 768px) {
   #fixed-container-uebersicht {
-    margin-top: 99px; /* statt 55px → +30px auf dem Handy */
+    margin-top: 100px; /* statt 55px → +30px auf dem Handy */
   }
 
   #scroll-content-uebersicht {
